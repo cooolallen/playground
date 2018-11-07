@@ -13,14 +13,21 @@ def main():
 
     # Create a set of agents (exactly four)
     agent_list = [
+        agents.TensorForceAgent(),
         agents.SimpleAgent(),
-        agents.RandomAgent(),
+        # agents.RandomAgent(),
         agents.SimpleAgent(),
-        agents.RandomAgent(),
+        agents.SimpleAgent(),
+        # agents.RandomAgent(),
         # agents.DockerAgent("pommerman/simple-agent", port=12345),
     ]
     # Make the "Free-For-All" environment using the agent list
     env = pommerman.make('PommeFFACompetition-v0', agent_list)
+
+    # setup a training agent
+    for agent in agent_list:
+        if isinstance(agent, agents.TensorForceAgent):
+            agent.initialize(env)
 
     # Run the episodes just like OpenAI Gym
     for i_episode in range(1):
