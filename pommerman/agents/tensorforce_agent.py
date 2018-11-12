@@ -42,7 +42,7 @@ class TensorForceAgent(BaseAgent):
     def act(self, obs, action_space):
         """This agent has its own way of inducing actions. See train_with_tensorforce."""
         action = self.agent.act(states=self.state, deterministic=False)
-        print(action)
+        
 
         return action
 

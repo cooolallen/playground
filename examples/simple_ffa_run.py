@@ -13,7 +13,8 @@ def main():
 
     # Create a set of agents (exactly four)
     agent_list = [
-        agents.TensorForceAgent(),
+        # agents.TensorForceAgent(),
+        agents.SimpleAgent(),
         agents.SimpleAgent(),
         # agents.RandomAgent(),
         agents.SimpleAgent(),
@@ -22,7 +23,8 @@ def main():
         # agents.DockerAgent("pommerman/simple-agent", port=12345),
     ]
     # Make the "Free-For-All" environment using the agent list
-    env = pommerman.make('PommeFFACompetition-v0', agent_list)
+    # env = pommerman.make('PommeFFACompetition-v0', agent_list)
+    env = pommerman.make('PommeTeamFast-v0', agent_list)
 
     # setup a training agent
     for agent in agent_list:
