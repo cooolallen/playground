@@ -8,7 +8,7 @@ class MyAgent(DockerAgentRunner):
     '''An example Docker agent class'''
 
     def __init__(self):
-        self._agent = agents.SimpleAgent()
+        self._agent = agents.IgnoreAgent()
 
     def init_agent(self, id, game_type):
         return self._agent.init_agent(id, game_type)
