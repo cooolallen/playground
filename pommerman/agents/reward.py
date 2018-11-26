@@ -1,47 +1,10 @@
-'''The Reward class is used to calculate the reward value for each action
-with three different state (Explore, Attack, Evade)
-'''
 from collections import defaultdict
 import queue
 import random
 
 import numpy as np
 
-from . import BaseAgent
-from .. import constants
-from .. import utility
-
-
-class HeuristicAgent(BaseAgent):
-    def __init__(self, *args, **kwargs):
-        super(SimpleAgent, self).__init__(*args, **kwargs)
-
-        # Keep track of recently visited uninteresting positions so that we
-        # don't keep visiting the same places.
-        self._recently_visited_positions = []
-        self._recently_visited_length = 6
-        # Keep track of the previous direction to help with the enemy standoffs.
-        self._prev_direction = None
-
-    def act(self, obs, action_space):
-        def convert_bombs(bomb_map):
-            '''Flatten outs the bomb array'''
-            ret = []
-            locations = np.where(bomb_map > 0)
-            for r, c in zip(locations[0], locations[1]):
-                ret.append({
-                    'position': (r, c),
-                    'blast_strength': int(bomb_map[(r, c)])
-                })
-            return ret
-
-        my_position = tuple(obs['position'])
-        board = np.array(obs['board'])
-        bombs = convert_bombs(np.array(obs['bomb_blast_strength']))
-        enemies = [constants.Item(e) for e in obs['enemies']]
-        ammo = int(obs['ammo'])
-        blast_strength = int(obs['blast_strength'])
-        return
+class Reward:
 
     def decideMode(obs, action_space):
         ## switch condition and get action
@@ -67,7 +30,7 @@ class HeuristicAgent(BaseAgent):
             return evadeScore(my_position, bombs, obs['bomb_life'])
         elif mode == 1:
             return attackScore(my_position, obs)
-            
+
     def evadeCondition(pos, bombs, bombLife):
         bombCnt = 0
         tickCnt = 0
@@ -76,7 +39,6 @@ class HeuristicAgent(BaseAgent):
                 bombCnt += 1
                 tickCnt += bombLife[bomb['position'][0]][bomb['position'][1]]
         return tickCnt < 5 + 2*bombCnt
-
 
     def evadeScore(pos, bombStrength, bombLife):
         score = 100
