@@ -17,6 +17,7 @@ class UpdateAgent(SimpleAgent):
     def act(self, obs, action_space):
         simulator = Simulator(obs, {})
         simulate_action = constants.Action(action_space.sample())
+        # update is a generator for the next possible obs given an action
         print(len(list(simulator.update(simulate_action))))
         return super(UpdateAgent, self).act(obs, action_space)
 
