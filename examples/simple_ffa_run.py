@@ -19,8 +19,8 @@ def main():
         agents.IgnoreAgent(),
         # agents.IgnoreAgent(),
         agents.UpdateAgent(),
-        # agents.SimpleAgent(),
-        agents.RandomAgent(),
+        agents.SimpleAgent(),
+        # agents.RandomAgent(),
         # agents.SimpleAgent(),
     ]
     # Make the "Free-For-All" environment using the agent list
