@@ -2,6 +2,9 @@
 from . import BaseAgent
 from .. import constants
 from .. import utility
+from ..characters import Bomber, Bomb, Flame
+
+from ..forward_model import ForwardModel
 import numpy as np
 from collections import defaultdict
 
@@ -10,19 +13,11 @@ class UpdateAgent(BaseAgent):
     """The Random Agent that returns random actions given an action_space."""
 
     def act(self, obs, action_space):
-        print(self.children_count(obs, action_space))
+        simulator = Simulator(action_space.sample(), obs, {})
+        obs_next = simulator.simulate([1,1,1,1])
+        print(simulator.children_count())
+
         return action_space.sample()
-
-    @staticmethod
-    def children_count(obs, action_space):
-        filter = np.vectorize(lambda x : x >= 9)        # a function check is it an agent elementwise
-        player_cnt = np.sum(filter(obs['board']))
-
-        return player_cnt * action_space.n
-
-    @staticmethod
-    def update(action, obs):
-        pass
 
 
 class Simulator(object):
@@ -30,17 +25,103 @@ class Simulator(object):
         self.obs = obs
         self.action = action
         self.blast_tracker = blast_tracker  # a tracker to track all the blast
-
+        self.args = self._get_args()
         # get the dictionary of observed agents id: position
         self.agents = self._get_agents()
 
     def children_count(self):
         filter = np.vectorize(lambda x : x >= 9)        # a function check is it an agent elementwise
         player_cnt = np.sum(filter(self.obs['board']))
-        return player_cnt * self.action_space.n
+        return player_cnt * 6
+
+
+    def simulate(self, actions):
+        simulate_args = self.args.copy()
+        simulate_args['actions'] = actions
+
+        board, agents, bombs, items, flames = ForwardModel.step(**simulate_args)
+
+        simulate_obs = ForwardModel.get_observations(None, board, agents, bombs, True, 8, constants.GameType(self.obs['game_type']), self.obs['game_env'])
+
+        own_obs = self._get_own_obs(simulate_obs)
+
+        return own_obs
 
 
 
+    def _get_args(self):
+        args = {}
+        args['curr_board'] = self.obs['board'].copy()
+        args['curr_agents'] = self._get_agents()
+        board = self.obs['board']
+        curr_bombs, curr_items, curr_flames = [], {}, []
+        m, n = len(board), len(board[0])
+
+        dummy_bomber = Bomber(10)
+
+        for i in range(m):
+            for j in range(n):
+                pos = (i, j)
+                if board[pos] == constants.Item.Bomb.value:
+                    bomb = Bomb(dummy_bomber, pos, self.obs['bomb_life'][pos], self.obs['bomb_blast_strength'][pos])
+                    curr_bombs.append(bomb)
+                elif utility.position_is_powerup(board, pos):
+                    curr_items[pos] = board[pos]
+                elif utility.position_is_flames(board, pos):
+                    flame = Flame(pos)
+                    curr_flames.append(flame)
+
+        args['curr_bombs'] = curr_bombs
+        args['curr_items'] = curr_items
+        args['curr_flames'] = curr_flames
+
+        return args
+
+    def _get_agents(self):
+        agents = []
+        board = self.obs['board']
+        for agent_id in [10, 11, 12, 13]:
+            agent = Bomber(agent_id - 10, self.obs['game_type'])        # the agent id is start from 0
+            pos = np.argwhere(board == agent_id)
+            if pos.shape[0] == 0:
+                # we cannot find the agent
+                agent.is_alive = False
+
+                # give them the default position
+                default_pos = [(1, 1), (9, 1), (9, 9), (1, 9)]
+                agent.position = default_pos[agent_id - 10]
+            else:
+                agent.position = tuple(pos[0])
+                # update the agent information
+                if self._is_myself(agent_id):
+                    agent.blast_strength = self.obs['blast_strength']
+                    agent.can_kick = self.obs['can_kick']
+                    agent.ammo = self.obs['ammo']
+                else:
+                    # if not myself, try to image a strong enemies
+                    agent.blast_strength = 7    # todo modify it to tracker
+                    agent.ammo = 10             # it can drop bomb every time
+            agents.append(agent)
+
+        return agents
+
+    def _is_myself(self, agent_id):
+        others = []
+        others.append(self.obs['teammate'].value)
+        others.extend([agent.value for agent in self.obs['enemies']])
+
+        return agent_id not in others
+
+    def _get_own_obs(self, simulate_obs):
+        for agent_id in [10, 11, 12, 13]:
+            if self._is_myself(agent_id):
+                own_obs = simulate_obs[agent_id - 10]
+                break
+
+        own_obs['alive'] = self.obs['alive']
+        return own_obs
+
+"""
     # given a combination of action, i can return a new observation
     def simulate(self, actions):
         # make a copy of the current observation
@@ -185,6 +266,6 @@ class Simulator(object):
     @staticmethod
     def _move_bomb(obs, curr_pos, target_pos):
         pass
-
+"""
 if __name__ == '__main__':
     blast_tracker = {'global_max': 9, '9': 2, '10': 2, '11': 2, '12': 2, '13': 2}

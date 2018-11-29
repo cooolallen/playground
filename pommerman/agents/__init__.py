@@ -6,5 +6,5 @@ from .player_agent import PlayerAgent
 from .random_agent import RandomAgent
 from .simple_agent import SimpleAgent
 from .ignore_agent import IgnoreAgent
-# from .update_agent import UpdateAgent
+from .update_agent import UpdateAgent
 from .tensorforce_agent import TensorForceAgent

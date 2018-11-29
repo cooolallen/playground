@@ -14,13 +14,13 @@ def main():
     # Create a set of agents (exactly four)
     agent_list = [
         # agents.DockerAgent("pommerman/simple-agent", port=10080),
+        agents.IgnoreAgent(),
+        # agents.PlayerAgent(agent_control='wasd'),
+        agents.IgnoreAgent(),
         # agents.IgnoreAgent(),
-        agents.PlayerAgent(agent_control='wasd'),
-        agents.IgnoreAgent(),
-        agents.IgnoreAgent(),
-        # agents.UpdateAgent(),
-        agents.SimpleAgent(),
-        # agents.RandomAgent(),
+        agents.UpdateAgent(),
+        # agents.SimpleAgent(),
+        agents.RandomAgent(),
         # agents.SimpleAgent(),
     ]
     # Make the "Free-For-All" environment using the agent list
