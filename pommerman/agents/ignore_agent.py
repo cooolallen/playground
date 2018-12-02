@@ -1,8 +1,9 @@
-
+'''IgnoreAgent'''
 from . import SimpleAgent
 from .. import constants
 
 class IgnoreAgent(SimpleAgent):
+    '''IgnoreAgent'''
     def __init__(self, *args, **kwargs):
         super(IgnoreAgent, self).__init__(*args, **kwargs)
 

@@ -13,7 +13,7 @@ def make_agent_from_string(agent_string, agent_id, docker_env_dict=None):
     
     agent_type, agent_control = agent_string.split("::")
 
-    assert agent_type in ["player", "simple", "random", "ignore", "docker", "http" , "test", "tensorforce"]
+    assert agent_type in ["player", "simple", "random", "ignore", "docker", "http" , "test", "tensorforce", "heuristic"]
 
     agent_instance = None
 
@@ -41,5 +41,7 @@ def make_agent_from_string(agent_string, agent_id, docker_env_dict=None):
         agent_instance = eval(agent_control)()
     elif agent_type == "tensorforce":
         agent_instance = agents.TensorForceAgent(algorithm=agent_control)
+    elif agent_type == "heuristic":
+        agent_instance = agent.HeuristicAgent()
 
     return agent_instance

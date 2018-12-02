@@ -128,3 +128,10 @@ class Result(Enum):
 class InvalidAction(Exception):
     '''Invalid Actions Exception'''
     pass
+
+
+class Mode(Enum):
+    '''Action Mode'''
+    Evade = 0
+    Attack = 1
+    Explore = 2
