@@ -1,0 +1,18 @@
+Usage: Running experiement with the shell script.
+
+1. install tqdm in venv for the better progress visualization
+
+2. Go to the root directory (playground) and type in
+   sh ./battle/experiement.sh agent0 agent1 agent2 agent3 num_times
+
+The definiation of arguments
+
+agent0 ~ agent3:
+Choose four agents from below for the experiement battle
+ SimpleAgent: simple
+ RandomAgent: random
+ IgnoreAgent: ignore
+
+nums_times: how many time you want to run the experiement.
+
+We are focus on the win rate of the team [0, 2]
