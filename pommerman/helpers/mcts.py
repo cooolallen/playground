@@ -39,6 +39,7 @@ class MCTree:
         for action in ACTIONS:
             rewards = [x.aggregating_reward for x in root.children[action]]
             ave_rewards[action] = sum(rewards)/len(rewards)
+        #max_agg_reward = max(ave_reward.keys())
         best_action = max(ave_rewards.items(), key=operator.itemgetter(1))[0]        
         return best_action
 
