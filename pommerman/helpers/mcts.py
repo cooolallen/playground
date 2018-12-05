@@ -39,8 +39,9 @@ class MCTree:
         for action in ACTIONS:
             rewards = [x.aggregating_reward for x in root.children[action]]
             ave_rewards[action] = sum(rewards)/len(rewards)
-        best_action = max(ave_rewards.items(), key=operator.itemgetter(1))[0]        
-        return best_action
+        max_agg_reward = max(ave_rewards.values())
+        best_actions = [k for k in ave_rewards if ave_rewards[k] == max_agg_reward]        
+        return random.choice(best_actions)
 
     def _buildTree(self):
         queue = [self.root]

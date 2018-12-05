@@ -25,6 +25,8 @@ class HeuristicAgent(SimpleAgent):
         # check mode and return the acts
         if mode in {constants.Mode.Evade, constants.Mode.Attack}:
             mcts = MCTree(obs)
-            return mcts.bestAction()
+            action = mcts.bestAction()
+            print(action)
+            return action
         else :
             return super().act(obs, action_space)
