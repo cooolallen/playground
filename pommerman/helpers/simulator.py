@@ -11,10 +11,11 @@ class Simulator:
     """Simulator for Monte-Carlo Tree"""
     def __init__(self, obs, blast_tracker):
         self._obs = obs
+        self._myself_idx = self._get_myself_idx()
         self._blast_tracker = blast_tracker  # a tracker to track all the blast
         self._args = self._get_args()
         self._observed_alive_agents = self._get_observed_alive_agents()
-     
+
     def getNumOfNextObs(self):
         return 6 ** len(self._observed_alive_agents)
     
@@ -23,12 +24,11 @@ class Simulator:
             yield self._simulate(actions)
     
     def _action_combination_generator(self, own_action):
-        myself_idx = [agent_id for agent_id in self._observed_alive_agents if self._is_myself(agent_id)][0]
         # remove myself from alive set because we know what myself going to do
         # create a pointer list for others
-        others_action_pointer = [agent_id - 10 for agent_id in self._observed_alive_agents if agent_id != myself_idx]
+        others_action_pointer = [agent_id - 10 for agent_id in self._observed_alive_agents if agent_id != self._myself_idx]
         actions_template = [0] * 4
-        actions_template[myself_idx - 10] = own_action.value
+        actions_template[self._myself_idx - 10] = own_action.value
         for actions in itertools.product(range(6), repeat=len(others_action_pointer)):
             curr_actions = actions_template.copy()
             for idx, action in zip(others_action_pointer, actions):
@@ -77,6 +77,7 @@ class Simulator:
     def _get_agents(self):
         agents = []
         board = self._obs['board']
+        default_pos = [(1, 1), (9, 1), (9, 9), (1, 9)]
         for agent_id in [10, 11, 12, 13]:
             agent = Bomber(agent_id - 10, self._obs['game_type'])        # the agent id is start from 0
             pos = np.argwhere(board == agent_id)
@@ -84,7 +85,6 @@ class Simulator:
                 # we cannot find the agent
                 agent.is_alive = False
                 # give them the default position
-                default_pos = [(1, 1), (9, 1), (9, 9), (1, 9)]
                 agent.position = default_pos[agent_id - 10]
             else:
                 agent.position = tuple(pos[0])
@@ -101,10 +101,7 @@ class Simulator:
         return agents
     
     def _is_myself(self, agent_id):
-        others = []
-        others.append(self._obs['teammate'].value)
-        others.extend([agent.value for agent in self._obs['enemies']])
-        return agent_id not in others
+        return agent_id == self._myself_idx
     
     def _get_own_obs(self, simulate_obs):
         for agent_id in [10, 11, 12, 13]:
@@ -119,3 +116,12 @@ class Simulator:
             dead_agents = [agent_id for agent_id in self._observed_alive_agents if agent_id not in own_obs['alive']]
             own_obs['alive'] = [agent_id for agent_id in self._obs['alive'] if agent_id not in dead_agents]
         return own_obs
+
+    def _get_myself_idx(self):
+        for agent_id in [10, 11, 12, 13]:
+            if constants.Item(agent_id) != self._obs['teammate'] and \
+                            constants.Item(agent_id) not in self._obs['enemies']:
+                return agent_id
+
+        print('agent_id not found')
+        print('teammate', self._obs['teammate'], 'enemies', self._obs['enemies'])
