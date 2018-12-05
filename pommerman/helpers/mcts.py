@@ -33,8 +33,7 @@ class MCTree:
         Backpropagate and return the best action
         """
         leaves = self._buildTree()
-        self._backPropagate(leaves)
-        root = leaves[0]
+        root = self._backPropagate(leaves)
         ave_rewards = {}
 
         for action in ACTIONS:
@@ -51,6 +50,7 @@ class MCTree:
                 curr = queue.pop(0)
                 temp.extend(curr.expandAll())
             queue = temp
+            print('reward:', [n.reward for n in queue])
 
         for node in queue:
             node.setAggregatingReward(node.getReward())    
@@ -68,15 +68,16 @@ class MCTree:
                 leaf = leaves.pop(0)
                 aggregating_rewards.append(leaf.getAggregatingReward())
             
-            print(aggregating_rewards)
-            parent.setAggregatingReward(sum(aggregating_rewards)/len(aggregating_rewards))
-            parent.setMaxReward(max(aggregating_rewards))
+            parent.setAggregatingReward(sum(aggregating_rewards)/len(aggregating_rewards)+parent.reward)
+            parent.setMaxReward(max(aggregating_rewards)+parent.reward)
+            #parent.setAggregatingReward(random.random())
+            #parent.setMaxReward(random.random())
             temp.append(parent)
             
             if not leaves:
                 leaves = temp
                 temp = []
-        
+        return leaves[0]        
 
 class Node:
     '''Tree Node'''
@@ -121,10 +122,9 @@ class Node:
         """
         next_observations = self.simulator.update(action)
         for next_obs in next_observations:
-            next_reward = Reward().reward(next_obs, self.mode)
-            print(next_reward)
+            next_reward = Reward().reward(next_obs, self.mode) or 0
             self.counter -= 1
-            child = Node(next_obs, self, next_reward)
+            child = Node(next_obs, parent=self, reward=next_reward)
             self.num_of_children += 1
             self.children[action].append(child)
 	
