@@ -21,10 +21,9 @@ class HeuristicAgent(SimpleAgent):
 
     def act(self, obs, action_space):
         # modify the obs
-        obs['board'][obs['board'] == obs['teammate'].value] = constants.Item.Flames.value
         mode = Reward().decideMode(obs, action_space)
         # check mode and return the acts
-        if mode == 0 or 1:
+        if mode in {constants.Mode.Evade, constants.Mode.Attack}:
             mcts = MCTree(obs)
             return mcts.bestAction()
         else :
