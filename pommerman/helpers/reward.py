@@ -21,10 +21,11 @@ class Reward:
         my_position = tuple(obs['position'])
         board = np.array(obs['board'])
         ammo = int(obs['ammo'])
+        enemyList = [x.value for x in obs.get('enemies')]
         if self.evadeCondition(my_position, bombs, obs['bomb_life']):
             # return evadeScore(my_position, obs['bomb_blast_strength'], obs['bomb_life'])
             return constants.Mode.Evade
-        elif self.attackCondition(ammo, my_position, board):
+        elif self.attackCondition(ammo, my_position, board, enemyList):
             ''' 0 stand for empty safe position;
                 1 stand for blocked by agent, wall, or bomb;
                 2 stand for reachable by bomb'''
@@ -57,7 +58,7 @@ class Reward:
                     score = score - (25 * (11 - bombLife[i][j])/10)
         return score
 
-    def attackCondition(self, ammo, myPos, board):
+    def attackCondition(self, ammo, myPos, board, enemyList):
         if ammo == 0: return False
         # this can be improve using bfs
         for i in range(len(board)):
