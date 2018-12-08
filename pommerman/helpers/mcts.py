@@ -23,10 +23,17 @@ class SimTree:
 
 class MCTree:
     '''Monte-Carlo Tree'''
-    def __init__(self, obs={}, level=2):
+    def __init__(self, obs={}, level=2, parent=None):
         self.root = Node(obs, root_flag=True)
         self.level = level
         self.best_action = constants.Action.Stop
+        self.parent = parent
+
+    def updateBestAction(self):
+        """
+        The function to propagate the current best action back to the parent
+        """
+        self.parent.bestAction = self.best_action
 
     def bestAction(self):
         """
@@ -41,7 +48,8 @@ class MCTree:
             ave_rewards[action] = sum(rewards)/len(rewards)
 
         max_agg_reward = max(ave_rewards.values())
-        best_actions = [k for k in ave_rewards if ave_rewards[k] == max_agg_reward]        
+        best_actions = [k for k in ave_rewards if ave_rewards[k] == max_agg_reward]
+        print(ave_rewards.values)
         return random.choice(best_actions)
 
     def _buildTree(self):
@@ -52,7 +60,7 @@ class MCTree:
                 curr = queue.pop(0)
                 temp.extend(curr.expandAll())
             queue = temp
-            print('reward:', [n.reward for n in queue])
+            # print('reward:', [n.reward for n in queue])
 
         for node in queue:
             node.setAggregatingReward(node.getReward())    
