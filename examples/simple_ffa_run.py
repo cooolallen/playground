@@ -1,22 +1,27 @@
 '''An example to show how to set up an pommerman game programmatically'''
+
+import sys
+print(sys.path)
 import pommerman
 from pommerman import agents
 
 
 def main():
     '''Simple function to bootstrap a game.
-       
+
        Use this as an example to set up your training env.
     '''
     # Print all possible environments in the Pommerman registry
     print(pommerman.REGISTRY)
+    print("agents: ")
+    print(agents)
 
     # Create a set of agents (exactly four)
     agent_list = [
+        agents.HeuristicAgent(),
         agents.SimpleAgent(),
-        agents.RandomAgent(),
         agents.SimpleAgent(),
-        agents.RandomAgent(),
+        agents.SimpleAgent(),
         # agents.DockerAgent("pommerman/simple-agent", port=12345),
     ]
     # Make the "Free-For-All" environment using the agent list

@@ -58,8 +58,8 @@ class Reward:
             if self.calDistance(bomb['position'][0], bomb['position'][1], pos[0], pos[1]) <= bomb['blast_strength']:
                 bombCnt += 1
                 tickCnt += bombLife[bomb['position'][0]][bomb['position'][1]]
-        if bombCnt = 0:
-            return false
+        if bombCnt == 0:
+            return False
         return tickCnt < (5 + 2*bombCnt)
 
     def evadeScore(self, pos, bombStrength, bombLife):

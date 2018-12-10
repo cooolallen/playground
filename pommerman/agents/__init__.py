@@ -5,4 +5,6 @@ from .http_agent import HttpAgent
 from .player_agent import PlayerAgent
 from .random_agent import RandomAgent
 from .simple_agent import SimpleAgent
+from .heuristic_agent import HeuristicAgent
+from .testing_agent import TestAgent
 from .tensorforce_agent import TensorForceAgent

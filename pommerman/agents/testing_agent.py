@@ -8,18 +8,18 @@ import random
 import numpy as np
 
 from . import BaseAgent
-from .reward import Reward
+from . import reward
 from .. import constants
 from .. import utility
 
 
-class SimpleAgent(BaseAgent):
+class TestAgent(BaseAgent):
     """This is a baseline agent. After you can beat it, submit your agent to
     compete.
     """
 
     def __init__(self, *args, **kwargs):
-        super(SimpleAgent, self).__init__(*args, **kwargs)
+        super(TestAgent, self).__init__(*args, **kwargs)
 
         # Keep track of recently visited uninteresting positions so that we
         # don't keep visiting the same places.
@@ -39,7 +39,7 @@ class SimpleAgent(BaseAgent):
                     'blast_strength': int(bomb_map[(r, c)])
                 })
             return ret
-        mode = Reward().decideMode(obs, action_space)
+        mode = Reward.decideMode(obs, action_space)
         print(mode)
         my_position = tuple(obs['position'])
         board = np.array(obs['board'])
