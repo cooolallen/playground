@@ -231,13 +231,13 @@ class SimTree:
                 curr_level -= 1
             
             if curr:  
-                step, curr = self._randomSelect(curr, is_leaf=True)
-                curr.isVisited = True
-                curr.setAggregatingReward(curr.getReward())
+                step, leaf = self._randomSelect(curr, is_leaf=True)
+                if leaf:
+                    curr = leaf
             else:
-                prev.isVisited = True
-                prev.setAggregatingReward(prev.getReward())
                 curr = prev
+            curr.isVisited = True
+            curr.setAggregatingReward(curr.getReward())    
             '''Back propagate'''
             curr = curr.parent
             while curr != self.root:
