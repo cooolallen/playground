@@ -6,6 +6,7 @@ from ..forward_model import ForwardModel
 from .. import constants
 import numpy as np
 import itertools
+import random
 
 class Simulator:
     """Simulator for Monte-Carlo Tree"""
@@ -29,7 +30,12 @@ class Simulator:
         others_action_pointer = [agent_id - 10 for agent_id in self._observed_alive_agents if agent_id != self._myself_idx]
         actions_template = [0] * 4
         actions_template[self._myself_idx - 10] = own_action.value
-        for actions in itertools.product(range(6), repeat=len(others_action_pointer)):
+
+        # create the random order action arguments
+        random_action_list = list(itertools.product(range(6), repeat=len(others_action_pointer)))
+        random.shuffle(random_action_list)
+
+        for actions in random_action_list:
             curr_actions = actions_template.copy()
             for idx, action in zip(others_action_pointer, actions):
                 curr_actions[idx] = action
