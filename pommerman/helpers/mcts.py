@@ -231,27 +231,29 @@ class SimTree:
                 curr_level -= 1
             
             if curr:  
-                step, curr = self._randomSelect(curr, is_leaf=True)
-                curr.isVisited = True
-                curr.setAggregatingReward(curr.getReward())
+                step, leaf = self._randomSelect(curr, is_leaf=True)
+                if leaf:
+                    curr = leaf
             else:
-                prev.isVisited = True
-                prev.setAggregatingReward(prev.getReward())
                 curr = prev
+            curr.isVisited = True
+            curr.setAggregatingReward(curr.getReward())    
             '''Back propagate'''
             curr = curr.parent
-            while curr != self.root:
+            while curr and curr != self.root:
                 curr.updateStatus()
                 curr = curr.parent
             #print("root's children", self.root.children)
             #print("first_step", first_step)
+            
             self.root.isVisited = sum([n.isVisited for l in self.root.children.values() for n in l]) == self.root.expected_num_of_children
             '''Update best action'''
-            rewards = [n.aggregating_reward for n in self.root.children[first_step]]
-            updating_reward = sum(rewards)/len(rewards)
-            self.rewards[first_step].setReward(updating_reward)
-            heapq.heapify(self.priority)
-            self._updateBestAction()
+            if self.root.num_of_children:
+                rewards = [n.aggregating_reward for n in self.root.children[first_step]]
+                updating_reward = sum(rewards)/len(rewards)
+                self.rewards[first_step].setReward(updating_reward)
+                heapq.heapify(self.priority)
+                self._updateBestAction()
         
         return self.best_action.value
 
