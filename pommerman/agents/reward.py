@@ -17,18 +17,17 @@ class Reward:
         return ret
     def decideMode(self, obs, action_space):
         ## switch condition and get action
-        bombs = self.convert_bombs(np.array(obs['bomb_blast_strength']))
-        my_position = tuple(obs['position'])
-        board = np.array(obs['board'])
-        ammo = int(obs['ammo'])
-        if self.evadeCondition(my_position, bombs, obs['bomb_life']):
+        # bombs = self.convert_bombs(np.array(obs['bomb_blast_strength']))
+        # my_position = tuple(obs['position'])
+        # board = np.array(obs['board'])
+        # ammo = int(obs['ammo'])
+        if self.evadeCondition(obs) == True:
             # return evadeScore(my_position, obs['bomb_blast_strength'], obs['bomb_life'])
             return 0
-        elif self.attackCondition(ammo, my_position, board):
+        elif self.attackCondition(obs) == True:
             ''' 0 stand for empty safe position;
                 1 stand for blocked by agent, wall, or bomb;
                 2 stand for reachable by bomb'''
-            # return attackScore(pos, board['board'], obs['bomb_blast_strength'])
             return 1
         else:
             return 2
@@ -38,16 +37,30 @@ class Reward:
         if mode == 0:
             return self.evadeScore(my_position, obs['bomb_blast_strength'], obs['bomb_life'])
         elif mode == 1:
-            return self.attackScore(my_position, obs)
+            enemyPos = []
+            enemyList = obs['enemies']
+            for i in range(len(board)):
+                for j in range(len(board[0])):
+                    if board[i][j] in enemyList and self.calDistance(i, j, myPos[0], myPos[1]) <= 4:
+                        enemyPos.append(tuple((i,j)))
+            maxAttack = 0
+            for pos in enemyPos:
+                maxAttack = max(maxAttack, self.attackScore(enemyPos, obs))
+            return maxAttack
 
-    def evadeCondition(self, pos, bombs, bombLife):
+    def evadeCondition(self, obs):
+        bombLife = obs['bomb_life']
+        pos = tuple(obs['position'])
+        bombs = self.convert_bombs(np.array(obs['bomb_blast_strength']))
         bombCnt = 0
         tickCnt = 0
         for bomb in bombs:
             if self.calDistance(bomb['position'][0], bomb['position'][1], pos[0], pos[1]) <= bomb['blast_strength']:
                 bombCnt += 1
                 tickCnt += bombLife[bomb['position'][0]][bomb['position'][1]]
-        return tickCnt < 5 + 2*bombCnt
+        if bombCnt = 0:
+            return false
+        return tickCnt < (5 + 2*bombCnt)
 
     def evadeScore(self, pos, bombStrength, bombLife):
         score = 100
@@ -57,12 +70,16 @@ class Reward:
                     score = score - (25 * (11 - bombLife[i][j])/10)
         return score
 
-    def attackCondition(self, ammo, myPos, board):
+    def attackCondition(self, obs):
+        myPos = tuple(obs['position'])
+        board = np.array(obs['board'])
+        ammo = int(obs['ammo'])
+        enemyList = obs['enemies']
         if ammo == 0: return False
         # this can be improve using bfs
         for i in range(len(board)):
             for j in range(len(board[0])):
-                if board[i][j] in enemyList and self.calDistance(i, j, myPos[0], myPos[1]):
+                if board[i][j] in enemyList and self.calDistance(i, j, myPos[0], myPos[1]) <= 4:
                     return True
         return False
 
