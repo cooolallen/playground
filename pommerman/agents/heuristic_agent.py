@@ -13,6 +13,7 @@ from ..helpers.mcts import MCTree
 from ..helpers.reward import Reward
 from .. import constants
 import timeout_decorator
+from timeout_decorator.timeout_decorator import TimeoutError
 
 class HeuristicAgent(SimpleAgent):
     """Heuristic agent"""
@@ -24,7 +25,7 @@ class HeuristicAgent(SimpleAgent):
         try:
             # try to return the action by method if not time out
             return self._act(obs, action_space)
-        except:
+        except TimeoutError:
             # if it is timeout return the current best action
             print('time out, best action:', self.bestAction)
             if self.bestAction is None:
