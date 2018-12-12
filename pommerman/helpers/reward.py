@@ -35,9 +35,10 @@ class Reward:
             return constants.Mode.Explore
 
     def reward(self, obs, mode):
-        my_position = tuple(obs['position'])
+        myPos = tuple(obs['position'])
+        board = np.array(obs['board'])
         if mode == constants.Mode.Evade:
-            return self.evadeScore(my_position, obs['bomb_blast_strength'], obs['bomb_life'])
+            return self.evadeScore(myPos, obs['bomb_blast_strength'], obs['bomb_life'])
         elif mode == constants.Mode.Attack:
             enemyPos = []
             enemyList = [x.value for x in obs.get('enemies')]
@@ -47,7 +48,7 @@ class Reward:
                         enemyPos.append(tuple((i,j)))
             maxAttack = 0
             for pos in enemyPos:
-                maxAttack = max(maxAttack, self.attackScore(enemyPos, obs))
+                maxAttack = max(maxAttack, self.attackScore(pos, obs))
             return maxAttack
 
     def evadeCondition(self, obs):
