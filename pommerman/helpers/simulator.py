@@ -17,12 +17,15 @@ class Simulator:
         self._args = self._get_args()
         self._observed_alive_agents = self._get_observed_alive_agents()
 
-    def getNumOfNextObs(self):
+    def getNumOfNextObs(self, action):
         return 6 ** len(self._observed_alive_agents)
     
     def update(self, action):
         for actions in self._action_combination_generator(action):
             yield self._simulate(actions)
+
+    def actionInvalid(self, action):
+        pass
     
     def _action_combination_generator(self, own_action):
         # remove myself from alive set because we know what myself going to do
