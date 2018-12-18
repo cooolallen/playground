@@ -91,9 +91,9 @@ class SimpleTeamAgent(BaseAgent):
         # 20181218
         flames = convert_flames(board, np.array(obs['bomb_blast_strength']))
         dang_move = []
-        for _m in [constants.Action.Up.value, constants.Action.Down.value,
-                   constants.Action.Left.value, constants.Action.Right.value]:
-            _d = (int(_m < 3)*(_m-1.5)*2, int(_m > 2)*(_m-3.5)*2)
+        for _m in [constants.Action.Up, constants.Action.Down,
+                   constants.Action.Left, constants.Action.Right]:
+            _d = (int(_m.value < 3)*(_m.value-1.5)*2, int(_m.value > 2)*(_m.value-3.5)*2)
             new_pos = (my_position[0]+_d[0], my_position[1]+_d[1])
             if {'position': new_pos, 'blast_strength': 1} in flames:
                 dang_move.append(_m)
@@ -135,6 +135,14 @@ class SimpleTeamAgent(BaseAgent):
 
         # Move towards an enemy if there is one in exactly three reachable spaces.
         direction = self._near_enemy(my_position, items, dist, prev, enemies, 5)  # 3 -> 5
+        # 20181218 remove dangerous moves
+        #if direction is not None:
+        #    for _dm in dang_move:
+        #        if _dm == direction:
+        #            direction = None  #.remove(_dm)
+        if direction in dang_move:
+            direction = None
+
         if direction is not None and (self._prev_direction != direction or
                                       random.random() < .5):
             self._prev_direction = direction
@@ -142,6 +150,10 @@ class SimpleTeamAgent(BaseAgent):
 
         # Move towards a good item if there is one within two reachable spaces.
         direction = self._near_good_powerup(my_position, items, dist, prev, 3)  # 2 -> 3
+        # 20181218 remove dangerous moves
+        if direction in dang_move:
+            direction = None
+
         if direction is not None:
             return direction.value
 
@@ -159,6 +171,10 @@ class SimpleTeamAgent(BaseAgent):
 
         # Move towards a wooden wall if there is one within two reachable spaces and you have a bomb.
         direction = self._near_wood(my_position, items, dist, prev, 4) # 2 -> 4
+        # 20181218 remove dangerous moves
+        if direction in dang_move:
+            direction = None
+
         if direction is not None:
             directions = self._filter_unsafe_directions(board, my_position,
                                                         [direction], bombs)
@@ -185,6 +201,14 @@ class SimpleTeamAgent(BaseAgent):
         self._recently_visited_positions.append(my_position)
         self._recently_visited_positions = self._recently_visited_positions[
             -self._recently_visited_length:]
+
+        # 20181218
+        # remove dangerous moves
+        for _dm in dang_move:
+            if _dm in directions:
+                directions.remove(_dm)
+        if len(directions) == 0:
+            directions = [constants.Action.Stop]
 
         return random.choice(directions).value
 
