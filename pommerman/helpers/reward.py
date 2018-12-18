@@ -38,12 +38,12 @@ class Reward:
         myPos = tuple(obs['position'])
         board = np.array(obs['board'])
         if mode == constants.Mode.Evade:
-            if self.checkSafety(obs) == False:
-                return 0
+            # if self.checkSafety(obs) == False:
+                # return 0
             return self.evadeScore(myPos, obs['bomb_blast_strength'], obs['bomb_life'])
         elif mode == constants.Mode.Attack:
-            if self.checkSafety(obs) == False:
-                return 0
+            # if self.checkSafety(obs) == False:
+            #     return 0
             enemyPos = []
             enemyList = [x.value for x in obs.get('enemies')]
             for i in range(len(board)):
@@ -164,12 +164,12 @@ class Reward:
     def calDistance(self, pos1R, pos1C, pos2R, pos2C):
         return abs(pos1R - pos2R) + abs(pos1C - pos2C)
 
-    def checkSafety(self, obs):
-        bombLife = obs['bomb_life']
-        bombStrength = obs['bomb_blast_strength']
-        myPos = obs['position']
-        for i in range(11):
-            for j in range(11):
-                if bombLife[i][j] == 1 and (i == myPos[0] or j == myPos[1]) and self.calDistance(myPos[0], myPos[1], i, j) <= bombStrength[i][j]:
-                    return False
-        return True
+    # def checkSafety(self, obs):
+    #     bombLife = obs['bomb_life']
+    #     bombStrength = obs['bomb_blast_strength']
+    #     myPos = obs['position']
+    #     for i in range(11):
+    #         for j in range(11):
+    #             if bombLife[i][j] == 1 and (i == myPos[0] or j == myPos[1]) and self.calDistance(myPos[0], myPos[1], i, j) <= bombStrength[i][j]:
+    #                 return False
+    #     return True
