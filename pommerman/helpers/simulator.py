@@ -16,31 +16,116 @@ class Simulator:
         self._blast_tracker = blast_tracker  # a tracker to track all the blast
         self._args = self._get_args()
         self._observed_alive_agents = self._get_observed_alive_agents()
+        self._random_actions = self._construct_random_actions()
 
-    def getNumOfNextObs(self):
-        return 6 ** len(self._observed_alive_agents)
+
+    def getNumOfNextObs(self, action):
+        return len(self._random_actions[action]) if self.isActionValid(action) else 0
+        # return 6 ** len(self._observed_alive_agents)
     
     def update(self, action):
         for actions in self._action_combination_generator(action):
             yield self._simulate(actions)
-    
+
+    def isActionValid(self, action, agent_id=None):
+        # if called by outside
+        if agent_id is None:
+            agent_id = self._myself_idx
+
+        # determine it is a dead action or not
+        pos = self._obs['position'] if agent_id == self._myself_idx else self._args['curr_agents'][
+            agent_id - 10].position
+        if not self._isSafe(pos, action):
+            return False
+
+        # stop is always valid
+        if action == constants.Action.Stop:
+            return True
+
+        if agent_id == self._myself_idx:
+            # if agent id is itself
+            if action == constants.Action.Bomb:
+                return self._obs['ammo'] > 0
+            else:
+                return utility.is_valid_direction(self._obs['board'], pos, action.value)
+        else:
+            # it is the other agent
+            if action == constants.Action.Bomb:
+                # assume other agent have infinity bombs
+                return True
+            else:
+                # the action is the direction
+                return utility.is_valid_direction(self._obs['board'], pos, action.value)
+
+    def _isSafe(self, original_pos, action):
+        def calDistance(pos1R, pos1C, pos2R, pos2C):
+            return abs(pos1R - pos2R) + abs(pos1C - pos2C)
+
+        if action == constants.Action.Bomb or not utility.is_valid_direction(self._obs['board'], original_pos, action.value):
+            # if we are going to drop a bomb, the location not change
+            action = constants.Action.Stop
+
+        pos = utility.get_next_position(original_pos, action)
+
+
+        bomb_life = self._obs['bomb_life'].copy()
+        bomb_strength = self._obs['bomb_blast_strength'].copy()
+        for i in range(11):
+            for j in range(11):
+                # if the pos is on the flame
+                if self._obs['board'][pos] == constants.Item.Flames.value:
+                    return False
+
+                if bomb_life[i][j] == 1 and (i == pos[0] or j == pos[1]) and calDistance(pos[0], pos[1], i, j) <= bomb_strength[i][j]:
+                    return False
+
+        return True
+
     def _action_combination_generator(self, own_action):
+
+
         # remove myself from alive set because we know what myself going to do
         # create a pointer list for others
-        others_action_pointer = [agent_id - 10 for agent_id in self._observed_alive_agents if agent_id != self._myself_idx]
+        others_action_pointer = [agent_id - 10 for agent_id in self._observed_alive_agents if
+                                 agent_id != self._myself_idx]
         actions_template = [0] * 4
         actions_template[self._myself_idx - 10] = own_action.value
 
-        # create the random order action arguments
-        random_action_list = list(itertools.product(range(6), repeat=len(others_action_pointer)))
-        random.shuffle(random_action_list)
+        # # create the random order action arguments
+        # total_action_list = list(itertools.product(range(6), repeat=len(others_action_pointer)))
+        # random_action_list = self._filter_by_combination(total_action_list)
+        # random.shuffle(random_action_list)
+        random_action_list = self._random_actions[own_action]
 
         for actions in random_action_list:
             curr_actions = actions_template.copy()
             for idx, action in zip(others_action_pointer, actions):
                 curr_actions[idx] = action
             yield curr_actions
-    
+
+    def _filter_by_combination(self, total_action_list):
+        return [actions for actions in total_action_list if all(
+            self.isActionValid(constants.Action(action), agent_id=agent_id) for agent_id, action in
+            enumerate(actions, 10))]
+
+    def _construct_random_actions(self):
+        random_actions = {}
+        for action_idx in range(6):
+            own_action = constants.Action(action_idx)
+            others_action_pointer = [agent_id - 10 for agent_id in self._observed_alive_agents if
+                                     agent_id != self._myself_idx]
+            actions_template = [0] * 4
+            actions_template[self._myself_idx - 10] = own_action.value
+
+            # create the random order action arguments
+            total_action_list = list(itertools.product(range(6), repeat=len(others_action_pointer)))
+            random_action_list = self._filter_by_combination(total_action_list)
+            random.shuffle(random_action_list)
+
+            random_actions[own_action] = random_action_list
+
+        return random_actions
+
     def _simulate(self, actions):
         simulate_args = self._args.copy()
         simulate_args['actions'] = actions
