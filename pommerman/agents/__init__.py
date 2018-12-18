@@ -7,5 +7,5 @@ from .random_agent import RandomAgent
 from .simple_agent import SimpleAgent
 from .ignore_agent import IgnoreAgent
 from .tensorforce_agent import TensorForceAgent
-from .heuristic_agent import HeuristicAgent
+#from .heuristic_agent import HeuristicAgent
 from .simple_team_agent import SimpleTeamAgent

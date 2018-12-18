@@ -39,33 +39,58 @@ class SimpleTeamAgent(BaseAgent):
                 })
             return ret
 
+        # 20181218
+        def convert_flames(_board, bomb_map):
+            locations = np.where(bomb_map > 0)
+            ret = []  # np.array([[0 for j in range(11)] for i in range(11)])
+            is_flame = []
+            for r, c in zip(locations[0], locations[1]):
+                blast_str = bomb_map[(r, c)]
+                if not (r, c) in is_flame:
+                    ret.append({
+                        'position': (r, c),
+                        'blast_strength': 1  # is_flame
+                    })
+                for _dir in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    for _i in range(1, int(blast_str)):
+                        _pos = (r + _dir[0] * _i, c + _dir[1] * _i)
+                        if _pos in is_flame:
+                            continue
+                        if utility.position_on_board(_board, _pos):
+                            if board[_pos] != constants.Item.Rigid and board[_pos] != constants.Item.Wood:
+                                ret.append({
+                                    'position': _pos,
+                                    'blast_strength': 1
+                                })
+                            else:
+                                break
+                        else:
+                            break
+            # ret = set(ret)
+            return ret
+
         my_position = tuple(obs['position'])
         board = np.array(obs['board'])
         bombs = convert_bombs(np.array(obs['bomb_blast_strength']))
         enemies = [constants.Item(e) for e in obs['enemies']]
-		
         # 20181208
         teammate = constants.Item(obs['teammate']) # fix it
         tm_value = teammate.value
-        #tm_position = np.where(board == teammate.value)
+        # tm_position = np.where(board == teammate.value)
         tm_position = False
-        tm_coordinates = (-1,-1)
+        tm_coordinates = (-1, -1)
         for i in range(len(board)):
             for j in range(len(board[0])):
-                if board[(i,j)] == tm_value:
+                if board[(i, j)] == tm_value:
                     tm_position = True
-                    tm_coordinates = (i,j)
-        #if not tm_position:
-
-            #tm_coordinates = (tm_position[0][0],tm_position[0][1])
-        #if not tm_position:
-        #	tmp_loc = np.where(board == constants.Item.Fog)
-        #	tm_position = (tmp_loc[0][0],tmp_loc[0][1])
-        #if not tm_position:
-        #	tm_position = (0,0)
+                    tm_coordinates = (i, j)
+        # clean discarded code //20181218
         enemies2 = enemies.copy()
         enemies2.append(teammate)
-        
+
+        # 20181218
+        flames = convert_flames(board, np.array(obs['bomb_blast_strength']))
+
         ammo = int(obs['ammo'])
         blast_strength = int(obs['blast_strength'])
         
@@ -83,10 +108,9 @@ class SimpleTeamAgent(BaseAgent):
 
             # 20181208
             if directions[0] == constants.Action.Stop and not tm_position:
-                directions = [constants.Action.Bomb]#.append(constants.Action.Bomb)
+                directions = [constants.Action.Bomb]  # .append(constants.Action.Bomb)
             elif directions[0] == constants.Action.Stop:
-                if self._maybe_bomb(
-                    ammo, blast_strength, items, dist, tm_coordinates):
+                if self._maybe_bomb(ammo, blast_strength, items, dist, tm_coordinates):
                     directions = [constants.Action.Bomb]
 
             return random.choice(directions).value
@@ -99,10 +123,8 @@ class SimpleTeamAgent(BaseAgent):
             if not tm_position:
                 return constants.Action.Bomb.value
             else:
-                if self._maybe_bomb(
-                    ammo, blast_strength, items, dist, tm_coordinates):
+                if self._maybe_bomb(ammo, blast_strength, items, dist, tm_coordinates):
                     return constants.Action.Bomb.value
-
 
         # Move towards an enemy if there is one in exactly three reachable spaces.
         direction = self._near_enemy(my_position, items, dist, prev, enemies, 5) # 3 -> 5
