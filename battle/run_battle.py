@@ -113,10 +113,9 @@ def run(args, seed=None):
         # print("Game Time: ", times[-1])
 
     atexit.register(env.close)
-    return infos
+    return infos, times
 
-
-def main():
+def parse_args():
     '''CLI entry pointed used to bootstrap a battle'''
     simple_agent = 'test::agents.SimpleAgent'
     player_agent = 'player::arrows'
@@ -178,29 +177,42 @@ def main():
     )
     args = parser.parse_args()
 
-    infos = run(args)
-    win_rate, tie_rate, lose_rate = calculate_win_rate(infos)
+    return args
+
+def main():
+    args = parse_args()
+    infos, times = run(args)
+    win_rate, tie_rate, lose_rate, avg_time = analysis(infos, times)
     print('total game', len(infos))
     print('final win rate', win_rate)
     print('final tie rate', tie_rate)
     print('final lose rate', lose_rate)
+    print('average survival time', avg_time, 's')
 
-
-def calculate_win_rate(infos):
+def analysis(infos, times):
     win_count = 0
     tie_count = 0
-    for info in infos:
+    time_sum, lose_cnt = 0, 0
+    for info, time in zip(infos, times):
         if 'winners' in info:
             if info['winners'] == [0, 2]:
                 win_count += 1
+            else:
+                # the team lose
+                time_sum += time
+                lose_cnt += 1
         else:
             # if tie
-            tie_count = 0
+            tie_count += 1
+            time_sum += time
+            lose_cnt += 1
+
     win_rate = win_count / len(infos)
     tie_rate = tie_count / len(infos)
     lose_rate = 1 - win_rate - tie_rate
+    avg_time = time_sum / lose_cnt
 
-    return win_rate, tie_rate, lose_rate
+    return win_rate, tie_rate, lose_rate, avg_time
 
 
 if __name__ == "__main__":
