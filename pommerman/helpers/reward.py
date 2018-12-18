@@ -170,6 +170,6 @@ class Reward:
         myPos = obs['position']
         for i in range(11):
             for j in range(11):
-                if bombLife[i][j] == 1 and (i == myPos[0] or j == myPos[1]) and self.calDistance(maPos[0], myPos[1], i, j) <= bombStrength[i][j]:
+                if bombLife[i][j] == 1 and (i == myPos[0] or j == myPos[1]) and self.calDistance(myPos[0], myPos[1], i, j) <= bombStrength[i][j]:
                     return False
         return True
