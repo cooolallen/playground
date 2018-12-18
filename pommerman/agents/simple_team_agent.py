@@ -90,6 +90,13 @@ class SimpleTeamAgent(BaseAgent):
 
         # 20181218
         flames = convert_flames(board, np.array(obs['bomb_blast_strength']))
+        dang_move = []
+        for _m in [constants.Action.Up.value, constants.Action.Down.value,
+                   constants.Action.Left.value, constants.Action.Right.value]:
+            _d = (int(_m < 3)*(_m-1.5)*2, int(_m > 2)*(_m-3.5)*2)
+            new_pos = (my_position[0]+_d[0], my_position[1]+_d[1])
+            if {'position': new_pos, 'blast_strength': 1} in flames:
+                dang_move.append(_m)
 
         ammo = int(obs['ammo'])
         blast_strength = int(obs['blast_strength'])
@@ -127,14 +134,14 @@ class SimpleTeamAgent(BaseAgent):
                     return constants.Action.Bomb.value
 
         # Move towards an enemy if there is one in exactly three reachable spaces.
-        direction = self._near_enemy(my_position, items, dist, prev, enemies, 5) # 3 -> 5
+        direction = self._near_enemy(my_position, items, dist, prev, enemies, 5)  # 3 -> 5
         if direction is not None and (self._prev_direction != direction or
                                       random.random() < .5):
             self._prev_direction = direction
             return direction.value
 
         # Move towards a good item if there is one within two reachable spaces.
-        direction = self._near_good_powerup(my_position, items, dist, prev, 3) # 2 -> 3 
+        direction = self._near_good_powerup(my_position, items, dist, prev, 3)  # 2 -> 3
         if direction is not None:
             return direction.value
 
@@ -221,7 +228,6 @@ class SimpleTeamAgent(BaseAgent):
                 else:
                     dist[position] = np.inf
 
-
         for bomb in bombs:
             if bomb['position'] == my_position:
                 items[constants.Item.Bomb].append(my_position)
@@ -244,7 +250,6 @@ class SimpleTeamAgent(BaseAgent):
                     elif (val == dist[new_position] and random.random() < .5):
                         dist[new_position] = val
                         prev[new_position] = position   
-
 
         return items, dist, prev
 
@@ -334,9 +339,8 @@ class SimpleTeamAgent(BaseAgent):
         # All directions are unsafe. Return a position that won't leave us locked.
         safe = []
 
-        #safe.append(constants.Action.Bomb)
-		
-		
+        # safe.append(constants.Action.Bomb)
+
         # TODO1: can_kick and lay_bomb
         # TODO2: find the nearest safe position
         if len(unsafe_directions) == 4:
