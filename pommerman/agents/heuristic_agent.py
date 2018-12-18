@@ -27,7 +27,7 @@ class HeuristicAgent(SimpleAgent):
             return self._act(obs, action_space)
         except TimeoutError:
             # if it is timeout return the current best action
-            #print('time out, best action:', self.best_action)
+            # print('time out, best action:', self.best_action)
             if self.best_action is None:
                 return action_space.sample()
             else:
@@ -39,7 +39,7 @@ class HeuristicAgent(SimpleAgent):
                 # reset the best action for the next run
                 self.best_action = None
 
-    #@timeout_decorator.timeout(0.1)       # the function will timeout after 100ms
+    @timeout_decorator.timeout(0.1)       # the function will timeout after 100ms
     def _act(self, obs, action_space):
         # modify the obs
         mode = Reward().decideMode(obs, action_space)

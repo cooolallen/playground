@@ -20,7 +20,7 @@ class Simulator:
 
 
     def getNumOfNextObs(self, action):
-        return len(self._random_actions[action])
+        return len(self._random_actions[action]) if self.isActionValid(action) else 0
         # return 6 ** len(self._observed_alive_agents)
     
     def update(self, action):
@@ -28,22 +28,25 @@ class Simulator:
             yield self._simulate(actions)
 
     def isActionValid(self, action, agent_id=None):
-        # stop is always valid
-        if action == constants.Action.Stop:
-            return True
-
         # if called by outside
         if agent_id is None:
             agent_id = self._myself_idx
+
+        # determine it is a dead action or not
+        pos = self._obs['position'] if agent_id == self._myself_idx else self._args['curr_agents'][
+            agent_id - 10].position
+        if not self._isSafe(pos, action):
+            return False
+
+        # stop is always valid
+        if action == constants.Action.Stop:
+            return True
 
         if agent_id == self._myself_idx:
             # if agent id is itself
             if action == constants.Action.Bomb:
                 return self._obs['ammo'] > 0
             else:
-                # the action is the direction
-                pos = self._obs['position']
-
                 return utility.is_valid_direction(self._obs['board'], pos, action.value)
         else:
             # it is the other agent
@@ -52,9 +55,32 @@ class Simulator:
                 return True
             else:
                 # the action is the direction
-                pos = self._args['curr_agents'][agent_id - 10].position
                 return utility.is_valid_direction(self._obs['board'], pos, action.value)
-    
+
+    def _isSafe(self, original_pos, action):
+        def calDistance(pos1R, pos1C, pos2R, pos2C):
+            return abs(pos1R - pos2R) + abs(pos1C - pos2C)
+
+        if action == constants.Action.Bomb or not utility.is_valid_direction(self._obs['board'], original_pos, action.value):
+            # if we are going to drop a bomb, the location not change
+            action = constants.Action.Stop
+
+        pos = utility.get_next_position(original_pos, action)
+
+
+        bomb_life = self._obs['bomb_life'].copy()
+        bomb_strength = self._obs['bomb_blast_strength'].copy()
+        for i in range(11):
+            for j in range(11):
+                # if the pos is on the flame
+                if self._obs['board'][pos] == constants.Item.Flames.value:
+                    return False
+
+                if bomb_life[i][j] == 1 and (i == pos[0] or j == pos[1]) and calDistance(pos[0], pos[1], i, j) <= bomb_strength[i][j]:
+                    return False
+
+        return True
+
     def _action_combination_generator(self, own_action):
 
 

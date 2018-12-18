@@ -17,6 +17,7 @@ def main():
         agents.HeuristicAgent(),
         agents.IgnoreAgent(),
         agents.IgnoreAgent(),
+        # agents.HeuristicAgent(),
         agents.IgnoreAgent(),
         # agents.SimpleAgent(),
         # agents.RandomAgent(),
