@@ -9,7 +9,7 @@ import numpy as np
 
 from . import BaseAgent
 from . import SimpleAgent
-from ..helpers.mcts import MCTree
+from ..helpers.mcts import MCTree, SimTree
 from ..helpers.reward import Reward
 from .. import constants
 import timeout_decorator
@@ -19,7 +19,7 @@ class HeuristicAgent(SimpleAgent):
     """Heuristic agent"""
     def __init__(self, *args, **kwargs):
         super(HeuristicAgent, self).__init__(*args, **kwargs)
-        self.bestAction = None
+        self.best_action = None
 
     def act(self, obs, action_space):
         try:
@@ -27,27 +27,29 @@ class HeuristicAgent(SimpleAgent):
             return self._act(obs, action_space)
         except TimeoutError:
             # if it is timeout return the current best action
-            print('time out, best action:', self.bestAction)
-            if self.bestAction is None:
+            #print('time out, best action:', self.best_action)
+            if self.best_action is None:
                 return action_space.sample()
             else:
-                if isinstance(self.bestAction, list):
-                    return random.sample(self.bestAction)
+                if isinstance(self.best_action, list):
+                    return random.sample(self.best_action)
                 else:
-                    return self.bestAction
+                    return self.best_action
 
                 # reset the best action for the next run
-                self.bestAction = None
+                self.best_action = None
 
-    @timeout_decorator.timeout(0.1)       # the function will timeout after 100ms
+    #@timeout_decorator.timeout(0.1)       # the function will timeout after 100ms
     def _act(self, obs, action_space):
         # modify the obs
         mode = Reward().decideMode(obs, action_space)
         # check mode and return the acts
         if mode in {constants.Mode.Evade, constants.Mode.Attack}:
-            mcts = MCTree(obs, parent=self)
-            action = mcts.bestAction()
-            print(action)
+            #mcts = MCTree(obs, agent=self)
+            #action = mcts.bestAction()
+            sim_tree = SimTree(obs, agent=self)
+            action = sim_tree.bestAction()
+            # print("best_action", action)
             return action
         else :
             return super().act(obs, action_space)
