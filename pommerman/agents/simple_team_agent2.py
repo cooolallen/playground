@@ -148,6 +148,11 @@ class SimpleTeamAgent2(BaseAgent):
         items, dist, prev = self._djikstra(
             board, my_position, bombs, enemies2, depth=10)
 
+        # 20181218
+        if tm_position:
+            itmes2, dist2, prev2 = self._djikstra(
+                board, tm_coordinates, bombs, enemies2, depth=10)
+
         # Move if we are in an unsafe place.
         unsafe_directions = self._directions_in_range_of_bomb(
             board, my_position, bombs, dist)
@@ -518,6 +523,30 @@ class SimpleTeamAgent2(BaseAgent):
 
         # Will we be stuck?
         x, y = my_position
+        for position in items.get(constants.Item.Passage):
+            if dist[position] == np.inf:
+                continue
+
+            # We can reach a passage that's outside of the bomb strength.
+            if dist[position] > blast_strength:
+                return True
+
+            # We can reach a passage that's outside of the bomb scope.
+            position_x, position_y = position
+            if position_x != x and position_y != y:
+                return True
+
+        return False
+
+    @staticmethod
+    def _maybe_bomb2(ammo, blast_strength, items, dist, my_position, tm_position):
+        # Do we have ammo?
+        if ammo < 1:
+            return False
+
+        # Will we be stuck?
+        x, y = my_position
+        x2, y2 = tm_position
         for position in items.get(constants.Item.Passage):
             if dist[position] == np.inf:
                 continue
