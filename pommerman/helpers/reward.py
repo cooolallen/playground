@@ -83,11 +83,31 @@ class Reward:
         ammo = int(obs['ammo'])
         enemyList = [x.value for x in obs.get('enemies')]
         if ammo == 0: return False
+        queue = []
+        visited = {}
+        dirs = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        queue.append(myPos[0]*11+myPos[1])
+        for i in range(5):
+            size = len(queue)
+            for j in range(size):
+                cur = queue.pop(0)
+                print("cur: ", cur)
+                visited[cur] = True
+                curRow = cur//11
+                curCol = cur%11
+                for dir in dirs:
+                    nextRow = curRow+dir[0]
+                    nextCol = curCol+dir[1]
+                    if nextRow >= 0 and nextRow < 11 and nextCol >= 0 and nextCol < 11 and (nextRow*11+nextCol) not in visited:
+                        if board[nextRow][nextCol] in enemyList:
+                            return True
+                        if board[nextRow][nextCol] == 0:
+                            queue.append(nextRow*11+nextCol)
         # this can be improve using bfs
-        for i in range(len(board)):
-            for j in range(len(board[0])):
-                if board[i][j] in enemyList and self.calDistance(i, j, myPos[0], myPos[1]) <= 4:
-                    return True
+        # for i in range(len(board)):
+        #     for j in range(len(board[0])):
+        #         if board[i][j] in enemyList and self.calDistance(i, j, myPos[0], myPos[1]) <= 4:
+        #             return True
         return False
 
 
