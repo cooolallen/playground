@@ -175,9 +175,12 @@ class SimpleTeamAgent2(BaseAgent):
                 return random.choice(directions).value
 
         # Lay pomme if we are adjacent to an enemy.
-        if self._is_adjacent_enemy(items, dist, enemies) and self._maybe_bomb(
+        # if self._is_adjacent_enemy(items, dist, enemies) and self._maybe_bomb(
+        #        ammo, blast_strength, items, dist, my_position):
+        # 20181218
+        # new lay pomme condition
+        if self._is_adjacent_enemy2(items, dist, enemies, my_position, blast_strength) and self._maybe_bomb(
                 ammo, blast_strength, items, dist, my_position):
-            
             # 20181208
             if not tm_position:
                 return constants.Action.Bomb.value
@@ -476,6 +479,24 @@ class SimpleTeamAgent2(BaseAgent):
         for enemy in enemies:
             for position in items.get(enemy, []):
                 if dist[position] == 1:
+                    return True
+        return False
+
+    # 20181218
+    # enemies reachable by your bomb
+    def _is_adjacent_enemy2(self, items, dist, enemies, my_position, blast_str):
+        for enemy in enemies:
+            for position in items.get(enemy, []):
+                if dist[position] == 1:
+                    return True
+                elif position[0] == my_position[0] \
+                        and abs(position[1] - my_position[1]) == dist[position] and dist[position] < blast_str - 1:
+                    return True
+                elif position[1] == my_position[1] \
+                        and abs(position[0] - my_position[0]) == dist[position] and dist[position] < blast_str - 1:
+                    return True
+                elif abs(position[0] - my_position[0]) == 1 and abs(position[1] - my_position[1]) == 1 \
+                        and dist[position] == 2 and random.random() < .5:
                     return True
         return False
 
