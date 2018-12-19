@@ -131,6 +131,7 @@ class SimpleTeamAgent2(BaseAgent):
         # 20181218
         flames = convert_flames(board, np.array(obs['bomb_blast_strength']))
         # modified bomb_life, consider chain reaction
+        '''
         bomb_life_board = np.array(obs['bomb_life'])
         bl_locations = np.where(bomb_life_board > 0)
         to_sort = []
@@ -158,11 +159,12 @@ class SimpleTeamAgent2(BaseAgent):
                             break
                     else:
                         break
+        '''
 
         flames2 = convert_flames2(board, np.array(obs['bomb_blast_strength']),
                                   np.array(obs['bomb_life']))  # bomb_life_board)
-        flames3 = convert_flames2(board, np.array(obs['bomb_blast_strength']),
-                                  bomb_life_board)
+        # flames3 = convert_flames2(board, np.array(obs['bomb_blast_strength']),
+        #                          bomb_life_board)
         dang_move = []
         for _m in [constants.Action.Up, constants.Action.Down,
                    constants.Action.Left, constants.Action.Right]:
