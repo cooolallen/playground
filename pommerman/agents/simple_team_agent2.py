@@ -12,13 +12,13 @@ from .. import constants
 from .. import utility
 
 
-class SimpleTeamAgent(BaseAgent):
+class SimpleTeamAgent2(BaseAgent):
     """This is a baseline agent. After you can beat it, submit your agent to
     compete.
     """
 
     def __init__(self, *args, **kwargs):
-        super(SimpleTeamAgent, self).__init__(*args, **kwargs)
+        super(SimpleTeamAgent2, self).__init__(*args, **kwargs)
 
         # Keep track of recently visited uninteresting positions so that we
         # don't keep visiting the same places.
@@ -138,8 +138,8 @@ class SimpleTeamAgent(BaseAgent):
             _d = (int(_m.value < 3)*(_m.value-1.5)*2, int(_m.value > 2)*(_m.value-3.5)*2)
             new_pos = (my_position[0]+_d[0], my_position[1]+_d[1])
             if {'position': new_pos, 'blast_strength': 1} in flames:
-
-                dang_move.append(_m)
+                if flames2[new_pos]['flame_time'] < 5:  # value can be adjusted
+                    dang_move.append(_m)
 
         ammo = int(obs['ammo'])
         blast_strength = int(obs['blast_strength'])
@@ -177,7 +177,7 @@ class SimpleTeamAgent(BaseAgent):
                     return constants.Action.Bomb.value
 
         # Move towards an enemy if there is one in exactly three reachable spaces.
-        direction = self._near_enemy(my_position, items, dist, prev, enemies, 3)  # 3 -> 5 ->3
+        direction = self._near_enemy(my_position, items, dist, prev, enemies, 5)  # 3 -> 5 ->3
         # 20181218 remove dangerous moves
         #if direction is not None:
         #    for _dm in dang_move:
@@ -201,7 +201,7 @@ class SimpleTeamAgent(BaseAgent):
             return direction.value
 
         # Maybe lay a bomb if we are within a space of a wooden wall.
-        if self._near_wood(my_position, items, dist, prev, blast_strength - 1): # 1 -> blast_strength
+        if self._near_wood(my_position, items, dist, prev, blast_strength - 1):  # 1 -> blast_strength
             if self._maybe_bomb(ammo, blast_strength, items, dist, my_position):
                 if not tm_position:
                     return constants.Action.Bomb.value
