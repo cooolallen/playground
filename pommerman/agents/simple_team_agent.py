@@ -66,7 +66,47 @@ class SimpleTeamAgent(BaseAgent):
                                 break
                         else:
                             break
-            # ret = set(ret)
+            return ret
+
+        # 20181218
+        # more aggressive flame map
+        def convert_flames2(_board, bomb_map, bomb_life):
+            locations = np.where(bomb_map > 0)
+            tmp_ret = {}
+            is_flame = []
+            for r, c in zip(locations[0], locations[1]):
+                blast_str = bomb_map[(r, c)]
+                if not (r, c) in is_flame:
+                    tmp_ret[(r, c)] = {
+                        'position': (r, c),
+                        'flame_time': bomb_life[(r, c)]  # is_flame
+                    }
+                    is_flame.append((r, c))
+                else:
+                    if bomb_life[(r, c)] < tmp_ret[(r, c)]['flame_time']:
+                        tmp_ret[(r, c)]['flame_time'] = bomb_life[(r, c)]
+                for _dir in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    for _i in range(1, int(blast_str)):
+                        _pos = (r + _dir[0] * _i, c + _dir[1] * _i)
+                        if _pos in is_flame:
+                            if bomb_life[_pos] < tmp_ret[_pos]['flame_time']:
+                                tmp_ret[_pos]['flame_time'] = bomb_life[_pos]
+                            continue
+                        if utility.position_on_board(_board, _pos):
+                            if board[_pos] != constants.Item.Rigid and board[_pos] != constants.Item.Wood:
+                                tmp_ret[_pos] = {
+                                    'position': _pos,
+                                    'flame_time': bomb_life[_pos]
+                                }
+                                is_flame.append(_pos)
+                            else:
+                                break
+                        else:
+                            break
+            # tmp_ret to ret
+            ret = []
+            for tm in tmp_ret:
+                ret.append(tmp_ret[tm])
             return ret
 
         my_position = tuple(obs['position'])
@@ -90,6 +130,8 @@ class SimpleTeamAgent(BaseAgent):
 
         # 20181218
         flames = convert_flames(board, np.array(obs['bomb_blast_strength']))
+        flames2 = convert_flames2(board, np.array(obs['bomb_blast_strength']),
+                                  np.array(obs['bomb_life']))
         dang_move = []
         for _m in [constants.Action.Up, constants.Action.Down,
                    constants.Action.Left, constants.Action.Right]:
@@ -134,7 +176,7 @@ class SimpleTeamAgent(BaseAgent):
                     return constants.Action.Bomb.value
 
         # Move towards an enemy if there is one in exactly three reachable spaces.
-        direction = self._near_enemy(my_position, items, dist, prev, enemies, 5)  # 3 -> 5
+        direction = self._near_enemy(my_position, items, dist, prev, enemies, 3)  # 3 -> 5 ->3
         # 20181218 remove dangerous moves
         #if direction is not None:
         #    for _dm in dang_move:
