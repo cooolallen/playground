@@ -149,9 +149,28 @@ class SimpleTeamAgent2(BaseAgent):
             board, my_position, bombs, enemies2, depth=10)
 
         # 20181218
+        kill_teammate = False
         if tm_position:
-            itmes2, dist2, prev2 = self._djikstra(
-                board, tm_coordinates, bombs, enemies2, depth=10)
+            items2, dist2, prev2 = self._djikstra(
+                board, tm_coordinates, bombs, enemies, depth=10)
+
+            # 20181218
+            # determine if our bomb will kill our teammate
+            if dist[tm_coordinates] < blast_strength \
+                and my_position[0] == tm_coordinates[0] or my_position[1] == tm_coordinates[1]:
+                kill_teammate = True
+                for _pos in items2.get(constants.Item.Passage):
+                    if dist2[_pos] == np.inf:
+                        continue
+                    if tm_coordinates[0] != _pos[0] and tm_coordinates[1] != _pos[1]:
+                        kill_teammate = False
+                    if dist2[_pos] > blast_strength \
+                            - abs(my_position[0] - tm_coordinates[0]) \
+                            - abs(my_position[1] - tm_coordinates[1]):
+                        kill_teammate = dist[tm_coordinates] < abs(my_position[0] - _pos[0]) \
+                                        + abs(my_position[1] - _pos[1])
+
+
 
         # Move if we are in an unsafe place.
         unsafe_directions = self._directions_in_range_of_bomb(
@@ -165,11 +184,11 @@ class SimpleTeamAgent2(BaseAgent):
                 board, my_position, unsafe_directions, bombs, enemies2)
 
             # 20181208
-            if directions[0] == constants.Action.Stop and not tm_position:
+            if len(directions) == 1 and directions[0] == constants.Action.Stop and not kill_teammate:  # tm_position:
                 directions = [constants.Action.Bomb]  # .append(constants.Action.Bomb)
-            elif directions[0] == constants.Action.Stop:
-                if self._maybe_bomb(ammo, blast_strength, items, dist, tm_coordinates):
-                    directions = [constants.Action.Bomb]
+            #elif directions[0] == constants.Action.Stop:
+            #    if self._maybe_bomb(ammo, blast_strength, items, dist, tm_coordinates):
+            #        directions = [constants.Action.Bomb]
             tm_dir = []
             for _dir in directions:
                 if _dir not in dang_move:
@@ -179,6 +198,8 @@ class SimpleTeamAgent2(BaseAgent):
             else:
                 return random.choice(directions).value
 
+
+
         # Lay pomme if we are adjacent to an enemy.
         # if self._is_adjacent_enemy(items, dist, enemies) and self._maybe_bomb(
         #        ammo, blast_strength, items, dist, my_position):
@@ -187,19 +208,15 @@ class SimpleTeamAgent2(BaseAgent):
         if self._is_adjacent_enemy2(items, dist, enemies, my_position, blast_strength) and self._maybe_bomb(
                 ammo, blast_strength, items, dist, my_position):
             # 20181208
-            if not tm_position:
+            if not kill_teammate:  # tm_position:
                 return constants.Action.Bomb.value
-            else:
-                if self._maybe_bomb(ammo, blast_strength, items, dist, tm_coordinates):
-                    return constants.Action.Bomb.value
+            # else:
+            #   if self._maybe_bomb(ammo, blast_strength, items, dist, tm_coordinates):
+            #      return constants.Action.Bomb.value
 
         # Move towards an enemy if there is one in exactly three reachable spaces.
         direction = self._near_enemy(my_position, items, dist, prev, enemies, 5)  # 3 -> 5 ->3
         # 20181218 remove dangerous moves
-        #if direction is not None:
-        #    for _dm in dang_move:
-        #        if _dm == direction:
-        #            direction = None  #.remove(_dm)
         if direction in dang_move:
             direction = None
 
@@ -220,11 +237,11 @@ class SimpleTeamAgent2(BaseAgent):
         # Maybe lay a bomb if we are within a space of a wooden wall.
         if self._near_wood(my_position, items, dist, prev, blast_strength - 1):  # 1 -> blast_strength
             if self._maybe_bomb(ammo, blast_strength, items, dist, my_position):
-                if not tm_position:
+                if not kill_teammate and random.random()<0.5:
                     return constants.Action.Bomb.value
                 else:
-                    if self._maybe_bomb(ammo, blast_strength, items, dist, tm_coordinates):
-                        return constants.Action.Bomb.value
+                    # if self._maybe_bomb(ammo, blast_strength, items, dist, tm_coordinates):
+                    #    return constants.Action.Bomb.value
                     return constants.Action.Stop.value
             else:
                 return constants.Action.Stop.value
@@ -538,6 +555,7 @@ class SimpleTeamAgent2(BaseAgent):
 
         return False
 
+    '''
     @staticmethod
     def _maybe_bomb2(ammo, blast_strength, items, dist, my_position, tm_position):
         # Do we have ammo?
@@ -561,6 +579,7 @@ class SimpleTeamAgent2(BaseAgent):
                 return True
 
         return False
+    '''
 
     @staticmethod
     def _nearest_position(dist, objs, items, radius):
