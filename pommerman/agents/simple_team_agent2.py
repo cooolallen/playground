@@ -51,6 +51,7 @@ class SimpleTeamAgent2(BaseAgent):
                         'position': (r, c),
                         'blast_strength': 1  # is_flame
                     })
+                    is_flame.append((r, c))
                 for _dir in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     for _i in range(1, int(blast_str)):
                         _pos = (r + _dir[0] * _i, c + _dir[1] * _i)
@@ -62,6 +63,7 @@ class SimpleTeamAgent2(BaseAgent):
                                     'position': _pos,
                                     'blast_strength': 1
                                 })
+                                is_flame.append(_pos)
                             else:
                                 break
                         else:
@@ -131,7 +133,7 @@ class SimpleTeamAgent2(BaseAgent):
         # 20181218
         flames = convert_flames(board, np.array(obs['bomb_blast_strength']))
         # modified bomb_life, consider chain reaction
-        '''
+
         bomb_life_board = np.array(obs['bomb_life'])
         bl_locations = np.where(bomb_life_board > 0)
         to_sort = []
@@ -141,7 +143,7 @@ class SimpleTeamAgent2(BaseAgent):
         to_sort.reverse()
         _bomb_str_map = np.array(obs['bomb_blast_strength'])
         while len(to_sort) > 0:
-        #for _b in to_sort:
+        # for _b in to_sort:
             _b = to_sort.pop(-1)
             _pos = _b[1]
             r1, c1 = _pos
@@ -159,12 +161,11 @@ class SimpleTeamAgent2(BaseAgent):
                             break
                     else:
                         break
-        '''
 
+        # flames2 = convert_flames2(board, np.array(obs['bomb_blast_strength']),
+        #                          np.array(obs['bomb_life']))  # bomb_life_board)
         flames2 = convert_flames2(board, np.array(obs['bomb_blast_strength']),
-                                  np.array(obs['bomb_life']))  # bomb_life_board)
-        # flames3 = convert_flames2(board, np.array(obs['bomb_blast_strength']),
-        #                          bomb_life_board)
+                                  bomb_life_board)
         dang_move = []
         for _m in [constants.Action.Up, constants.Action.Down,
                    constants.Action.Left, constants.Action.Right]:
@@ -190,7 +191,8 @@ class SimpleTeamAgent2(BaseAgent):
             # 20181218
             # determine if our bomb will kill our teammate
             if dist[tm_coordinates] < blast_strength \
-                and my_position[0] == tm_coordinates[0] or my_position[1] == tm_coordinates[1]:
+                    and my_position[0] == tm_coordinates[0] \
+                    or my_position[1] == tm_coordinates[1]:
                 kill_teammate = True
                 for _pos in items2.get(constants.Item.Passage):
                     if dist2[_pos] == np.inf:
@@ -202,8 +204,6 @@ class SimpleTeamAgent2(BaseAgent):
                             - abs(my_position[1] - tm_coordinates[1]):
                         kill_teammate = dist[tm_coordinates] < abs(my_position[0] - _pos[0]) \
                                         + abs(my_position[1] - _pos[1])
-
-
 
         # Move if we are in an unsafe place.
         unsafe_directions = self._directions_in_range_of_bomb(
@@ -254,7 +254,7 @@ class SimpleTeamAgent2(BaseAgent):
             direction = None
 
         if direction is not None and (self._prev_direction != direction or
-                                      random.random() < .5):
+                                      random.random() < .75):
             self._prev_direction = direction
             return direction.value
 
@@ -270,14 +270,14 @@ class SimpleTeamAgent2(BaseAgent):
         # Maybe lay a bomb if we are within a space of a wooden wall.
         if self._near_wood(my_position, items, dist, prev, blast_strength - 1):  # 1 -> blast_strength
             if self._maybe_bomb(ammo, blast_strength, items, dist, my_position):
-                if not kill_teammate and random.random()<0.5:
+                if not kill_teammate and random.random() < 0.75:
                     return constants.Action.Bomb.value
-                else:
+                # else:
                     # if self._maybe_bomb(ammo, blast_strength, items, dist, tm_coordinates):
                     #    return constants.Action.Bomb.value
-                    return constants.Action.Stop.value
-            else:
-                return constants.Action.Stop.value
+                #    return constants.Action.Stop.value
+            # else:
+                # return constants.Action.Stop.value
 
         # Move towards a wooden wall if there is one within two reachable spaces and you have a bomb.
         direction = self._near_wood(my_position, items, dist, prev, 4) # 2 -> 4
