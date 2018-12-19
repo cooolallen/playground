@@ -130,8 +130,39 @@ class SimpleTeamAgent2(BaseAgent):
 
         # 20181218
         flames = convert_flames(board, np.array(obs['bomb_blast_strength']))
+        # modified bomb_life, consider chain reaction
+        bomb_life_board = np.array(obs['bomb_life'])
+        bl_locations = np.where(bomb_life_board > 0)
+        to_sort = []
+        for b0, b1 in zip(bl_locations[0], bl_locations[1]):
+            to_sort.append([bomb_life_board[(b0, b1)], (b0, b1)])
+        to_sort.sort()
+        to_sort.reverse()
+        _bomb_str_map = np.array(obs['bomb_blast_strength'])
+        while len(to_sort) > 0:
+        #for _b in to_sort:
+            _b = to_sort.pop(-1)
+            _pos = _b[1]
+            r1, c1 = _pos
+            b_life = _b[0]
+            for _dir in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                for _i in range(1, int(_bomb_str_map[_pos])):
+                    _pos2 = (r1 + _dir[0] * _i, c1 + _dir[1] * _i)
+                    if utility.position_on_board(board, _pos2):
+                        if _bomb_str_map[_pos2] > 0 \
+                                and bomb_life_board[_pos2] < bomb_life_board[_pos]:
+                            bomb_life_board[_pos2] = bomb_life_board[_pos2]
+                            to_sort.append([b_life, _pos2])
+                        elif board[_pos2] == constants.Item.Rigid \
+                                or board[_pos2] == constants.Item.Wood:
+                            break
+                    else:
+                        break
+
         flames2 = convert_flames2(board, np.array(obs['bomb_blast_strength']),
-                                  np.array(obs['bomb_life']))
+                                  np.array(obs['bomb_life']))  # bomb_life_board)
+        flames3 = convert_flames2(board, np.array(obs['bomb_blast_strength']),
+                                  bomb_life_board)
         dang_move = []
         for _m in [constants.Action.Up, constants.Action.Down,
                    constants.Action.Left, constants.Action.Right]:
