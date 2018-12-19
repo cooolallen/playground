@@ -55,6 +55,7 @@ def run(args, seed=None):
 
         obs = env.reset()
         done = False
+        timer = 0
 
         while not done:
             if args.render:
@@ -67,6 +68,7 @@ def run(args, seed=None):
                 time.sleep(1.0 / env._render_fps)
             actions = env.act(obs)
             obs, reward, done, info = env.step(actions)
+            timer += 1
 
         # print("Final Result: ", info)
 
@@ -89,7 +91,7 @@ def run(args, seed=None):
             utility.join_json_state(record_json_dir, _agents, finished_at,
                                     config, info)
 
-        return info
+        return info, timer
 
     if seed is None:
         # Pick a random seed between 0 and 2^31 - 1
@@ -100,6 +102,7 @@ def run(args, seed=None):
 
     infos = []
     times = []
+    timers = []
     for i in tqdm(range(num_times)):
         start = time.time()
 
@@ -107,13 +110,14 @@ def run(args, seed=None):
             if record_pngs_dir else None
         record_json_dir_ = record_json_dir + '/%d' % (i + 1) \
             if record_json_dir else None
-        infos.append(_run(record_pngs_dir_, record_json_dir_))
+        info, timer = _run(record_pngs_dir_, record_json_dir_)
 
+        infos.append(info)
         times.append(time.time() - start)
-        # print("Game Time: ", times[-1])
+        timers.append(timer)
 
     atexit.register(env.close)
-    return infos, times
+    return infos, timers
 
 def parse_args():
     '''CLI entry pointed used to bootstrap a battle'''
@@ -187,30 +191,30 @@ def main():
     print('final win rate', win_rate)
     print('final tie rate', tie_rate)
     print('final lose rate', lose_rate)
-    print('average survival time', avg_time, 's')
+    print('average survival timestamp:', avg_time)
 
-def analysis(infos, times):
+def analysis(infos, timers):
     win_count = 0
     tie_count = 0
-    time_sum, lose_cnt = 0, 0
-    for info, time in zip(infos, times):
+    time_sum, tie_lose_count = 0, 0
+    for info, timer in zip(infos, timers):
         if 'winners' in info:
             if info['winners'] == [0, 2]:
                 win_count += 1
             else:
                 # the team lose
-                time_sum += time
-                lose_cnt += 1
+                time_sum += timer
+                tie_lose_count += 1
         else:
             # if tie
             tie_count += 1
-            time_sum += time
-            lose_cnt += 1
+            time_sum += timer
+            tie_lose_count += 1
 
     win_rate = win_count / len(infos)
     tie_rate = tie_count / len(infos)
     lose_rate = 1 - win_rate - tie_rate
-    avg_time = time_sum / lose_cnt
+    avg_time = time_sum / tie_lose_count
 
     return win_rate, tie_rate, lose_rate, avg_time
 
