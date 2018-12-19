@@ -17,9 +17,10 @@ from timeout_decorator.timeout_decorator import TimeoutError
 
 class HeuristicAgent(SimpleAgent):
     """Heuristic agent"""
-    def __init__(self, *args, **kwargs):
-        super(HeuristicAgent, self).__init__(*args, **kwargs)
+    def __init__(self, minmax=False):
+        super(HeuristicAgent, self).__init__()
         self.best_action = None
+        self.minmax = minmax
 
     def act(self, obs, action_space):
         try:
@@ -39,7 +40,7 @@ class HeuristicAgent(SimpleAgent):
                 # reset the best action for the next run
                 self.best_action = None
 
-    #@timeout_decorator.timeout(0.1)       # the function will timeout after 100ms
+    @timeout_decorator.timeout(0.1)       # the function will timeout after 100ms
     def _act(self, obs, action_space):
         # modify the obs
         mode = Reward().decideMode(obs, action_space)
@@ -48,7 +49,7 @@ class HeuristicAgent(SimpleAgent):
             #mcts = MCTree(obs, agent=self)
             #action = mcts.bestAction()
             sim_tree = SimTree(obs, agent=self)
-            action = sim_tree.bestAction(minimax=True)
+            action = sim_tree.bestAction(minimax=self.minmax)
             # print("best_action", action)
             return action
         else :
