@@ -91,7 +91,7 @@ class Reward:
             size = len(queue)
             for j in range(size):
                 cur = queue.pop(0)
-                print("cur: ", cur)
+                # print("cur: ", cur)
                 visited[cur] = True
                 curRow = cur//11
                 curCol = cur%11

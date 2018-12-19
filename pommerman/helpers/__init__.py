@@ -13,7 +13,7 @@ def make_agent_from_string(agent_string, agent_id, docker_env_dict=None):
     
     agent_type, agent_control = agent_string.split("::")
 
-    assert agent_type in ["player", "simple", "random", "ignore", "simpleTeam", "simpleTeam2", "mcts_avg", "mcts_minmax", "docker",
+    assert agent_type in ["player", "simple", "random", "ignore", "simpleTeam", "simpleTeam2", "mcts", "mcts_avg", "mcts_minmax", "docker",
                           "http", "test", "tensorforce"]
 
     agent_instance = None
@@ -30,10 +30,12 @@ def make_agent_from_string(agent_string, agent_id, docker_env_dict=None):
         agent_instance = agents.SimpleTeamAgent()
     elif agent_type == "simpleTeam2":
         agent_instance = agents.SimpleTeamAgent2()
+    elif agent_type == "mcts":
+        agent_instance = agents.HeuristicAgent()
     elif agent_type == "mcts_avg":
-        agent_instance = agents.HeuristicAgent(minmax=False)
+        agent_instance = agents.HeuristicAgent(standard=False, minmax=False)
     elif agent_type == "mcts_minmax":
-        agent_instance = agents.HeuristicAgent(minmax=True)
+        agent_instance = agents.HeuristicAgent(standard=False, minmax=True)
     elif agent_type == "docker":
         port = agent_id + 1000
         if not USE_GAME_SERVERS:
