@@ -114,7 +114,7 @@ class SimpleTeamAgent2(BaseAgent):
         bombs = convert_bombs(np.array(obs['bomb_blast_strength']))
         enemies = [constants.Item(e) for e in obs['enemies']]
         # 20181208
-        teammate = constants.Item(obs['teammate']) # fix it
+        teammate = constants.Item(obs['teammate'])  # fix it
         tm_value = teammate.value
         # tm_position = np.where(board == teammate.value)
         tm_position = False
@@ -151,7 +151,10 @@ class SimpleTeamAgent2(BaseAgent):
         # Move if we are in an unsafe place.
         unsafe_directions = self._directions_in_range_of_bomb(
             board, my_position, bombs, dist)
-        if unsafe_directions:
+        real_dang = False
+        if my_position in flames2:
+            real_dang = flames2[my_position]['flame_time'] < 7
+        if unsafe_directions and real_dang:  # consider when will the bomb explode
             # 20181208
             directions = self._find_safe_directions(
                 board, my_position, unsafe_directions, bombs, enemies2)
@@ -162,8 +165,14 @@ class SimpleTeamAgent2(BaseAgent):
             elif directions[0] == constants.Action.Stop:
                 if self._maybe_bomb(ammo, blast_strength, items, dist, tm_coordinates):
                     directions = [constants.Action.Bomb]
-
-            return random.choice(directions).value
+            tm_dir = []
+            for _dir in directions:
+                if _dir not in dang_move:
+                    tm_dir.append(_dir)
+            if len(tm_dir) != 0:
+                return random.choice(tm_dir).value
+            else:
+                return random.choice(directions).value
 
         # Lay pomme if we are adjacent to an enemy.
         if self._is_adjacent_enemy(items, dist, enemies) and self._maybe_bomb(
