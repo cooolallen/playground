@@ -51,7 +51,6 @@ class Node:
             RIGHT: self.simulator.getNumOfNextObs(RIGHT),
             BOMB: self.simulator.getNumOfNextObs(BOMB)
         }
-        #print(self.num_of_next_obs)
         self.expected_num_of_children = sum(self.num_of_next_obs.values()) 
         self.counter = self.expected_num_of_children
         self.obs_generators = {
@@ -88,15 +87,24 @@ class Node:
         next_reward = Reward().reward(next_obs, self.mode) or 0.0
         return Node(next_obs, parent=self, reward=next_reward)
 
-    def updateStatus(self):
+    def updateStatus(self, step=None, minimax=False):
         children = [x for l in self.children.values() for x in l]
         visits = [x.isVisited for x in children]
-        rewards = [x.aggregating_reward for x in children]
-        #print(rewards)
         self.isVisited = sum(visits) == self.expected_num_of_children
-        self.aggregating_reward = sum(rewards)/len(rewards) + self.reward #should add reward or not?
-        self.max_reward = max(rewards) + self.reward
+        if step:
+            rewards = [x.getAggregatingReward() for x in self.children[step]]
+            if minimax:
+                return min(rewards), max(rewards)
+            return sum(rewards)/len(rewards), max(rewards)
         
+        if minimax:
+            rewards = [min([n.getAggregatingReward()]) for action in self.children for n in self.children[action]]
+            _max = max(rewards)
+            return _max, _max
+        
+        rewards = [x.getAggregatingReward() for x in children]
+        return sum(rewards)/len(rewards) + self.reward, max(rewards) + self.reward
+
     def _expand(self, action, computer_reward=False):
         """
         Add children with specific action
@@ -170,7 +178,6 @@ class SimTree:
     def _updateBestAction(self):
         '''The function to propagate the current best action back to the parent'''
         self.best_action = self.priority[0].getAction()
-        # print("best so far", self.best_action)
         self.agent.best_action = self.best_action.value
         
     def _randomSelect(self, curr, is_leaf=False):
@@ -195,9 +202,6 @@ class SimTree:
         if is_leaf or rdn >= len(curr.children[action]):
             
             obs_generator = curr.obs_generators[action]
-            #print('rdn', rdn)
-            #print('num_of_children', len(curr.children[action]))
-            #print('is_leaf', is_leaf)
             nxt_node = curr.getNext(next(obs_generator.generator))
             obs_generator.remains -= 1
             curr.num_of_children += 1
@@ -211,18 +215,15 @@ class SimTree:
 
         return None, None
 
-    def bestAction(self):
+    def bestAction(self, minimax=False):
         '''Return best action'''
-        # print("Start finding best action")
         self._initHeap()
         curr = self.root
         first_step = None
         while not self.root.isVisited:
-            #print("root isVisited", self.root.isVisited)
             '''Traverse to leaf'''
             curr_level = self.level - 1 
             while curr_level: 
-                #print("curr_level", curr_level)
                 prev = curr
                 step, curr = self._randomSelect(curr)
                 if not curr: break
@@ -236,25 +237,25 @@ class SimTree:
                     curr = leaf
             else:
                 curr = prev
+            
             curr.isVisited = True
             curr.setAggregatingReward(curr.getReward())    
-            '''Back propagate'''
             curr = curr.parent
-            while curr and curr != self.root:
-                curr.updateStatus()
-                curr = curr.parent
-            #print("root's children", self.root.children)
-            #print("first_step", first_step)
             
-            self.root.isVisited = sum([n.isVisited for l in self.root.children.values() for n in l]) == self.root.expected_num_of_children
+            '''Back propagate'''
+            while curr and curr != self.root:
+                _agg, _max = curr.updateStatus(minimax=minimax)
+                curr.setAggregatingReward(_agg)
+                curr.setMaxReward(_max)
+                curr = curr.parent
+            
             '''Update best action'''
             if self.root.num_of_children:
-                rewards = [n.aggregating_reward for n in self.root.children[first_step]]
-                updating_reward = sum(rewards)/len(rewards)
-                self.rewards[first_step].setReward(updating_reward)
+                _agg, _ = self.root.updateStatus(step=first_step, minimax=minimax)
+                self.rewards[first_step].setReward(_agg)
                 heapq.heapify(self.priority)
                 self._updateBestAction()
-        
+            
         return self.best_action.value
 
 class MCTree:
@@ -309,8 +310,6 @@ class MCTree:
             
             parent.setAggregatingReward(sum(aggregating_rewards)/len(aggregating_rewards)+parent.reward)
             parent.setMaxReward(max(aggregating_rewards)+parent.reward)
-            #parent.setAggregatingReward(random.random())
-            #parent.setMaxReward(random.random())
             temp.append(parent)
             
             if not leaves:

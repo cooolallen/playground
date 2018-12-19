@@ -39,7 +39,7 @@ class HeuristicAgent(SimpleAgent):
                 # reset the best action for the next run
                 self.best_action = None
 
-    @timeout_decorator.timeout(0.1)       # the function will timeout after 100ms
+    #@timeout_decorator.timeout(0.1)       # the function will timeout after 100ms
     def _act(self, obs, action_space):
         # modify the obs
         mode = Reward().decideMode(obs, action_space)
@@ -48,7 +48,7 @@ class HeuristicAgent(SimpleAgent):
             #mcts = MCTree(obs, agent=self)
             #action = mcts.bestAction()
             sim_tree = SimTree(obs, agent=self)
-            action = sim_tree.bestAction()
+            action = sim_tree.bestAction(minimax=True)
             # print("best_action", action)
             return action
         else :
