@@ -3,7 +3,9 @@ import random
 import operator
 import collections
 import uuid
+import math
 import heapq
+
 from .simulator import Simulator  
 from .reward import Reward
 from .. import constants
@@ -15,17 +17,20 @@ DOWN = constants.Action.Down
 LEFT = constants.Action.Left
 RIGHT = constants.Action.Right
 BOMB = constants.Action.Bomb
- 
 ACTIONS = [
     STOP, UP, DOWN, LEFT, RIGHT, BOMB
 ]
+
+SCALAR=1/math.sqrt(2.0)
+
 
 class Generator:
     '''Generator'''
     def __init__(self, generator, remains):
         self.generator = generator
         self.remains = remains
-    
+
+
 class Node:
     '''Tree Node'''
     def __init__(self, obs, parent=None, reward=0.0,
@@ -87,6 +92,9 @@ class Node:
         next_reward = Reward().reward(next_obs, self.mode) or 0.0
         return Node(next_obs, parent=self, reward=next_reward)
 
+    def incrementVisit(self):
+        self.visits += 1
+
     def updateStatus(self, step=None, minimax=False):
         children = [x for l in self.children.values() for x in l]
         visits = [x.isVisited for x in children]
@@ -136,6 +144,7 @@ class Node:
     def fullyExpanded(self):
         return self.counter == 0
 
+
 class Act:
     '''self-defined object for act-reward pair'''
     def __init__(self, action):
@@ -153,6 +162,139 @@ class Act:
     
     def getAction(self):
         return self.action
+
+
+class MCTree:
+    '''Monte-Carlo Tree'''
+    def __init__(self, obs, level=2, agent=None, turn=1000):
+        self.root = Node(obs, root_flag=True)
+        self.level = level
+        self.best_action = random.choice(ACTIONS)
+        self.agent = agent
+        self.priority = []
+        self.turn = turn
+        self.rewards = {
+            STOP: Act(STOP), 
+            UP: Act(UP), 
+            DOWN: Act(DOWN), 
+            LEFT: Act(LEFT), 
+            RIGHT: Act(RIGHT), 
+            BOMB: Act(BOMB)
+        }
+
+    def _initHeap(self):
+        for action in self.rewards:
+            self.priority.append(self.rewards[action])
+    
+    def _updateBestAction(self):
+        '''The function to propagate the current best action back to the parent'''
+        best_act = self.priority[0]
+        self.best_action = random.choice([n.getAction() for n in self.priority if n.getReward()==best_act.getReward()])
+        self.agent.best_action = self.best_action.value
+        
+    def _expand(self, curr, is_leaf=False):
+        '''return the next to-be-visited node'''
+        #print("is_leaf:",is_leaf)
+        if not curr.obs_generators:
+            return None, None
+        action = random.choice(list(curr.obs_generators.keys()))
+        num_of_next_obs = curr.getNumOfNextObs4SingleAct(action)
+        while num_of_next_obs == 0:
+            del curr.obs_generators[action]
+            if not curr.obs_generators: break
+            action = random.choice(list(curr.obs_generators.keys()))
+            num_of_next_obs = curr.getNumOfNextObs4SingleAct(action)
+        
+        if not curr.obs_generators:
+            return None, None
+        
+        #print(curr.children[action])
+        if not curr.children[action]:
+            obs_generator = curr.obs_generators[action]
+            nxt_node = curr.getNext(next(obs_generator.generator))
+            obs_generator.remains -= 1
+            curr.num_of_children += 1
+            curr.children[action].append(nxt_node)
+            return action, nxt_node 
+        
+        elif random.uniform(0,1) < .5:
+            return action, self._bestChild(action, curr, SCALAR)
+
+        elif curr.obs_generators[action].remains != 0:
+            obs_generator = curr.obs_generators[action]
+            nxt_node = curr.getNext(next(obs_generator.generator))
+            obs_generator.remains -= 1
+            curr.num_of_children += 1
+            curr.children[action].append(nxt_node)
+            return action, nxt_node
+        
+        return action, self._bestChild(action, curr, SCALAR)
+    
+    def _bestChild(self, action, node, scalar):
+        best_score=-float('inf')
+        best_children = []
+        for c in node.children[action]:
+            exploit=c.reward
+            explore=math.sqrt(2.0*math.log(node.visits)/c.visits)
+            score = exploit + scalar * explore
+            if score == best_score:
+                best_children.append(c)
+            if score>best_score:
+                best_children=[c]
+                best_score=score
+        
+        return random.choice(best_children)
+         
+    def bestAction(self, minimax=False):
+        '''Return best action'''
+        self._initHeap()
+        curr = self.root
+        first_step = None
+        curr_turn = self.turn
+        while curr_turn:
+            '''Traverse to leaf'''
+            curr = self.root
+            curr_level = self.level - 1 
+            while curr_level: 
+                prev = curr
+                step, curr = self._expand(curr)
+                if not curr: break
+                if curr_level == self.level - 1:
+                    first_step = step
+                curr_level -= 1
+            
+            if curr:  
+                step, leaf = self._expand(curr, is_leaf=True)
+                if leaf:
+                    curr = leaf
+            else:
+                curr = prev
+            
+            curr.isVisited = True
+            curr.incrementVisit()
+            curr.setAggregatingReward(curr.getReward())    
+            curr = curr.parent
+            
+            '''Back propagate'''
+            while curr and curr != self.root:
+                _agg, _max = curr.updateStatus(minimax=minimax)
+                curr.incrementVisit()
+                curr.setAggregatingReward(_agg)
+                curr.setMaxReward(_max)
+                curr = curr.parent
+            
+            '''Update best action'''
+            if self.root.num_of_children:
+                _agg, _ = self.root.updateStatus(step=first_step, minimax=minimax)
+                self.root.incrementVisit()
+                self.rewards[first_step].setReward(_agg)
+                heapq.heapify(self.priority)
+                self._updateBestAction()
+            
+            curr_turn -= 1
+
+        return self.best_action.value
+
 
 class SimTree:
     '''Just do some random play-out'''
@@ -222,6 +364,7 @@ class SimTree:
         first_step = None
         while not self.root.isVisited:
             '''Traverse to leaf'''
+            curr = self.root
             curr_level = self.level - 1 
             while curr_level: 
                 prev = curr
@@ -258,8 +401,9 @@ class SimTree:
             
         return self.best_action.value
 
-class MCTree:
-    '''Monte-Carlo Tree'''
+
+class BFSTree:
+    '''BFS Tree'''
     def __init__(self, obs={}, level=2):
         self.root = Node(obs, root_flag=True)
         self.level = level
