@@ -28,7 +28,7 @@ def make_agent_from_string(agent_string, agent_id, docker_env_dict=None):
         agent_instance = agents.IgnoreAgent()
     elif agent_type == "simpleTeam":
         agent_instance = agents.SimpleTeamAgent()
-    elif agent_type == "simpleTeam":
+    elif agent_type == "simpleTeam2":
         agent_instance = agents.SimpleTeamAgent2()
     elif agent_type == "mcts_avg":
         agent_instance = agents.HeuristicAgent(minmax=False)
@@ -51,6 +51,6 @@ def make_agent_from_string(agent_string, agent_id, docker_env_dict=None):
     elif agent_type == "tensorforce":
         agent_instance = agents.TensorForceAgent(algorithm=agent_control)
     elif agent_type == "heuristic":
-        agent_instance = agent.HeuristicAgent()
+        agent_instance = agents.HeuristicAgent()
 
     return agent_instance
