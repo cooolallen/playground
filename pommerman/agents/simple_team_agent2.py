@@ -186,7 +186,7 @@ class SimpleTeamAgent2(BaseAgent):
             # 20181208
             if len(directions) == 1 and directions[0] == constants.Action.Stop and not kill_teammate:  # tm_position:
                 directions = [constants.Action.Bomb]  # .append(constants.Action.Bomb)
-            #elif directions[0] == constants.Action.Stop:
+            # elif directions[0] == constants.Action.Stop:
             #    if self._maybe_bomb(ammo, blast_strength, items, dist, tm_coordinates):
             #        directions = [constants.Action.Bomb]
             tm_dir = []
