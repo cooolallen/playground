@@ -9,9 +9,12 @@ The definiation of arguments
 
 agent0 ~ agent3:
 Choose four agents from below for the experiement battle
- SimpleAgent: simple
- RandomAgent: random
- IgnoreAgent: ignore
+ SimpleAgent       : simple
+ RandomAgent       : random
+ IgnoreAgent       : ignore
+ SimpleTeam        : simpleTeam
+ Monte Carlo Avg   : mcts_avg
+ Monte Carlo MinMax: mcts_minmax
 
 nums_times: how many time you want to run the experiement.
 
