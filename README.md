@@ -1,3 +1,8 @@
+# Agents Update and Installation
+We build up several agents in the "pommerman/agents" for the team competition. Please read the [documentation](./docs) to install and run the battle by the "./example/simple_team_run.py".
+
+If anyone want to redo all the experiement, please check the [experiements README](./battle).
+
 # Playground
 
 > First time? check out our [website](https://www.pommerman.com) for more information,
